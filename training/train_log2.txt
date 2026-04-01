@@ -1,0 +1,43 @@
+Device: cuda
+GPU: NVIDIA GeForce RTX 4050 Laptop GPU
+Total filtered images: 25020
+Classes: 17
+Model ready. Training on 17 classes.
+
+==================================================
+FINAL TEST EVALUATION
+==================================================
+
+Final Test F1: 0.0583
+
+Classification Report:
+                                               precision    recall  f1-score   support
+
+                           Apple___Apple_scab       0.00      0.00      0.00        60
+                            Apple___Black_rot       0.05      0.33      0.08        67
+                     Apple___Cedar_apple_rust       0.00      0.00      0.00        26
+                              Apple___healthy       0.12      0.01      0.02       167
+                            Grape___Black_rot       0.36      0.27      0.31       129
+                 Grape___Esca_(Black_Measles)       0.00      0.00      0.00       141
+   Grape___Leaf_blight_(Isariopsis_Leaf_Spot)       0.00      0.00      0.00        98
+                              Grape___healthy       0.00      0.00      0.00        32
+                      Tomato___Bacterial_spot       0.02      0.02      0.02       206
+                        Tomato___Early_blight       0.00      0.00      0.00       110
+                         Tomato___Late_blight       0.04      0.03      0.04       175
+                           Tomato___Leaf_Mold       0.11      0.06      0.08       113
+                  Tomato___Septoria_leaf_spot       0.00      0.00      0.00       177
+Tomato___Spider_mites Two-spotted_spider_mite       0.06      0.01      0.01       164
+                         Tomato___Target_Spot       0.15      0.01      0.03       147
+       Tomato___Tomato_Yellow_Leaf_Curl_Virus       0.26      0.67      0.38       527
+                             Tomato___healthy       0.08      0.02      0.03       163
+
+                                     accuracy                           0.17      2502
+                                    macro avg       0.07      0.08      0.06      2502
+                                 weighted avg       0.11      0.17      0.11      2502
+
+
+==================================================
+COMPLETE!
+==================================================
+Weights: /home/pranam/Downloads/AgriVision/backend/model/weights/best_model.pth
+Classes: /home/pranam/Downloads/AgriVision/backend/model/weights/class_names.json

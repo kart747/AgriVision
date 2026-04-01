@@ -1,9 +1,14 @@
 """
 AgriVision AI - EfficientNetB0 Training Script
 Upload to Google Drive and run on Google Colab
+
+Usage:
+  python train.py           # Full training
+  python train.py --eval   # Evaluation only
 """
 
 import os
+import sys
 import json
 import time
 import torch
@@ -16,19 +21,22 @@ from sklearn.metrics import f1_score, classification_report
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 
+EVAL_ONLY = "--eval" in sys.argv
+
 # CONFIG
 DATASET_PATH = "/home/pranam/Downloads/plantvillage-dataset/plantvillage dataset/color"
-WEIGHTS_DIR  = "/home/pranam/Downloads/Matrix/weights"
+WEIGHTS_DIR  = "/home/pranam/Downloads/AgriVision/backend/model/weights"
 BATCH_SIZE   = 32
 IMG_SIZE     = 224
 FROZEN_EPOCHS   = 5
-UNFROZEN_EPOCHS = 15
+UNFROZEN_EPOCHS = 20
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 TARGET_CLASSES = [
     "Tomato___healthy", "Tomato___Bacterial_spot", "Tomato___Early_blight",
     "Tomato___Late_blight", "Tomato___Leaf_Mold", "Tomato___Septoria_leaf_spot",
-    "Tomato___Spider_mites Two-spotted_spider_mite", "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+    "Tomato___Target_Spot", "Tomato___Spider_mites Two-spotted_spider_mite", 
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
     "Apple___healthy", "Apple___Apple_scab", "Apple___Black_rot", "Apple___Cedar_apple_rust",
     "Grape___healthy", "Grape___Black_rot", "Grape___Esca_(Black_Measles)", "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)"
 ]
@@ -114,11 +122,6 @@ model.classifier = nn.Sequential(nn.Dropout(0.3), nn.Linear(1280, num_classes))
 model = model.to(DEVICE)
 criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
 
-print(f"Model ready. Training on {num_classes} classes.")
-
-# TRAINING
-best_f1 = 0.0
-
 def run_epoch(loader, training=True, optimizer=None):
     model.train() if training else model.eval()
     total_loss, all_preds, all_labels = 0.0, [], []
@@ -136,48 +139,62 @@ def run_epoch(loader, training=True, optimizer=None):
             all_labels.extend(labels.cpu().numpy())
     return total_loss / len(loader.dataset), f1_score(all_labels, all_preds, average='macro', zero_division=0)
 
-# Phase 1: Frozen
-print("\n" + "="*50)
-print("PHASE 1: Training classifier head (frozen)")
-print("="*50)
-optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3)
-scheduler = CosineAnnealingLR(optimizer, T_max=FROZEN_EPOCHS)
-for epoch in range(1, FROZEN_EPOCHS + 1):
-    t0 = time.time()
-    train_loss, train_f1 = run_epoch(train_loader, True, optimizer)
-    val_loss,   val_f1   = run_epoch(val_loader, False)
-    scheduler.step()
-    elapsed = time.time() - t0
-    print(f"Epoch {epoch}/{FROZEN_EPOCHS} | Train F1: {train_f1:.4f} | Val F1: {val_f1:.4f} | {elapsed:.0f}s")
-    if val_f1 > best_f1:
-        best_f1 = val_f1
-        torch.save(model.state_dict(), os.path.join(WEIGHTS_DIR, "best_model.pth"))
-        print(f"  -> Saved best_model.pth (F1: {best_f1:.4f})")
+print(f"Model ready. Training on {num_classes} classes.")
 
-# Phase 2: Unfrozen
-print("\n" + "="*50)
-print("PHASE 2: Fine-tuning (unfrozen)")
-print("="*50)
-for p in model.parameters(): p.requires_grad = True
-optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
-scheduler = CosineAnnealingLR(optimizer, T_max=UNFROZEN_EPOCHS)
-for epoch in range(1, UNFROZEN_EPOCHS + 1):
-    t0 = time.time()
-    train_loss, train_f1 = run_epoch(train_loader, True, optimizer)
-    val_loss,   val_f1   = run_epoch(val_loader, False)
-    scheduler.step()
-    elapsed = time.time() - t0
-    print(f"Epoch {FROZEN_EPOCHS+epoch} | Train F1: {train_f1:.4f} | Val F1: {val_f1:.4f} | {elapsed:.0f}s")
-    if val_f1 > best_f1:
-        best_f1 = val_f1
-        torch.save(model.state_dict(), os.path.join(WEIGHTS_DIR, "best_model.pth"))
-        print(f"  -> Saved best_model.pth (F1: {best_f1:.4f})")
+# TRAINING (only if not eval mode)
+if EVAL_ONLY:
+    print("\n" + "="*50)
+    print("EVALUATION ONLY MODE")
+    print("="*50)
+    if not os.path.exists(os.path.join(WEIGHTS_DIR, "best_model.pth")):
+        print("ERROR: No best_model.pth found. Run training first.")
+        sys.exit(1)
+    checkpoint = torch.load(os.path.join(WEIGHTS_DIR, "best_model.pth"), map_location=DEVICE)
+    model.load_state_dict(checkpoint)
+    print("Loaded best_model.pth")
+else:
+    print("\n" + "="*50)
+    print("PHASE 1: Training classifier head (frozen)")
+    print("="*50)
+    best_f1 = 0.0
+    optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3)
+    scheduler = CosineAnnealingLR(optimizer, T_max=FROZEN_EPOCHS)
+    for epoch in range(1, FROZEN_EPOCHS + 1):
+        t0 = time.time()
+        train_loss, train_f1 = run_epoch(train_loader, True, optimizer)
+        val_loss,   val_f1   = run_epoch(val_loader, False)
+        scheduler.step()
+        elapsed = time.time() - t0
+        print(f"Epoch {epoch}/{FROZEN_EPOCHS} | Train F1: {train_f1:.4f} | Val F1: {val_f1:.4f} | {elapsed:.0f}s")
+        if val_f1 > best_f1:
+            best_f1 = val_f1
+            torch.save(model.state_dict(), os.path.join(WEIGHTS_DIR, "best_model.pth"))
+            print(f"  -> Saved best_model.pth (F1: {best_f1:.4f})")
+
+    print("\n" + "="*50)
+    print("PHASE 2: Fine-tuning (unfrozen)")
+    print("="*50)
+    for p in model.parameters(): p.requires_grad = True
+    optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+    scheduler = CosineAnnealingLR(optimizer, T_max=UNFROZEN_EPOCHS)
+    for epoch in range(1, UNFROZEN_EPOCHS + 1):
+        t0 = time.time()
+        train_loss, train_f1 = run_epoch(train_loader, True, optimizer)
+        val_loss,   val_f1   = run_epoch(val_loader, False)
+        scheduler.step()
+        elapsed = time.time() - t0
+        print(f"Epoch {FROZEN_EPOCHS+epoch} | Train F1: {train_f1:.4f} | Val F1: {val_f1:.4f} | {elapsed:.0f}s")
+        if val_f1 > best_f1:
+            best_f1 = val_f1
+            torch.save(model.state_dict(), os.path.join(WEIGHTS_DIR, "best_model.pth"))
+            print(f"  -> Saved best_model.pth (F1: {best_f1:.4f})")
+    
+    print(f"\nBest Validation F1: {best_f1:.4f}")
 
 # Test Eval
 print("\n" + "="*50)
 print("FINAL TEST EVALUATION")
 print("="*50)
-model.load_state_dict(torch.load(os.path.join(WEIGHTS_DIR, "best_model.pth")))
 model.eval()
 all_preds, all_labels = [], []
 with torch.no_grad():
@@ -191,8 +208,7 @@ print("\nClassification Report:")
 print(classification_report(all_labels, all_preds, target_names=target_class_names, zero_division=0))
 
 print("\n" + "="*50)
-print("TRAINING COMPLETE!")
+print("COMPLETE!")
 print("="*50)
-print(f"Best F1: {best_f1:.4f}")
 print(f"Weights: {WEIGHTS_DIR}/best_model.pth")
 print(f"Classes: {WEIGHTS_DIR}/class_names.json")

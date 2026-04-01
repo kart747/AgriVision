@@ -1,0 +1,20 @@
+INFO:     Started server process [102567]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+[AgriVision] Starting backend...
+[AgriVision] Weights path: /home/pranam/Downloads/AgriVision/backend/model/weights/best_model.pth
+[AgriVision] Classes path: /home/pranam/Downloads/AgriVision/backend/model/weights/class_names.json
+[AgriVision] Model loaded: 16 classes detected
+[AgriVision] Model load status: READY
+INFO:     127.0.0.1:35886 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35898 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43694 - "POST /predict HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:46954 - "POST /predict HTTP/1.1" 422 Unprocessable Content
+[AgriVision] GROQ_API_KEY not found; using fallback recommendation.
+INFO:     127.0.0.1:52320 - "POST /predict HTTP/1.1" 200 OK
+[AgriVision] GROQ_API_KEY not found; using fallback recommendation.
+INFO:     127.0.0.1:41180 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34716 - "POST /predict HTTP/1.1" 422 Unprocessable Content
+[AgriVision] GROQ_API_KEY not found; using fallback recommendation.
+INFO:     127.0.0.1:57148 - "POST /predict HTTP/1.1" 200 OK
