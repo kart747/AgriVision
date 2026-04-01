@@ -8,17 +8,21 @@ import torch
 from torchvision import models
 
 SUPPORTED_CROPS = {"Tomato", "Apple", "Grape"}
+BASE_DIR = Path(__file__).resolve().parent
 
 
 class DiseasePredictor:
     def __init__(
         self,
-        weights_path: Path,
-        classes_path: Path,
+        weights_path: Path | None = None,
+        classes_path: Path | None = None,
         num_classes: Optional[int] = None,
     ) -> None:
-        self.weights_path = weights_path
-        self.classes_path = classes_path
+        default_weights = BASE_DIR / "weights" / "best_model.pth"
+        default_classes = BASE_DIR / "weights" / "class_names.json"
+
+        self.weights_path = (weights_path or default_weights).resolve()
+        self.classes_path = (classes_path or default_classes).resolve()
         self.num_classes = num_classes
         self.detected_num_classes = 0
         self.architecture = "efficientnet_b0"
@@ -28,6 +32,21 @@ class DiseasePredictor:
         self.model_loaded = False
 
     def load_resources(self) -> None:
+        # Enforce absolute paths relative to this file to avoid cwd-dependent failures.
+        weights_candidate = self.weights_path
+        classes_candidate = self.classes_path
+
+        if not weights_candidate.is_absolute():
+            weights_candidate = BASE_DIR / weights_candidate
+        if not classes_candidate.is_absolute():
+            classes_candidate = BASE_DIR / classes_candidate
+
+        default_weights = BASE_DIR / "weights" / "best_model.pth"
+        default_classes = BASE_DIR / "weights" / "class_names.json"
+
+        self.weights_path = (weights_candidate if weights_candidate.exists() else default_weights).resolve()
+        self.classes_path = (classes_candidate if classes_candidate.exists() else default_classes).resolve()
+
         self.class_names = self._load_class_names()
         self.detected_num_classes = len(self.class_names)
         self._refresh_supported_indices()

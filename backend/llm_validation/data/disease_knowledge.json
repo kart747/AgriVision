@@ -1,0 +1,322 @@
+{
+  "crops": {
+    "Tomato": [
+      {
+        "disease": "Tomato Yellow Leaf Curl Virus",
+        "symptoms": [
+          "Yellowing of leaves",
+          "Leaf curling and rolling",
+          "Stunted plant growth",
+          "Reduced fruit production",
+          "Mottling on leaves"
+        ],
+        "organic_treatments": [
+          "Remove infected plants immediately to prevent virus spread",
+          "Spray neem oil (5% solution) every 7-10 days to control whitefly vectors",
+          "Install yellow sticky traps to monitor and reduce adult whitefly population",
+          "Encourage parasitoid wasps and other natural predators by planting flowering plants nearby",
+          "Use reflective mulches (silver-colored) to confuse whitefly insects"
+        ],
+        "chemical_treatments": [
+          "Spray imidacloprid (0.005%) at 10-day intervals to target whitefly nymphs",
+          "Use thiamethoxam (0.01%) for rapid vector control",
+          "Apply acephate (0.1%) if whitefly infestation becomes severe",
+          "Rotate chemical insecticides to prevent resistance development",
+          "Use systemic insecticides like dimethoate (0.03%) for early intervention"
+        ],
+        "recovery_time_days": 21,
+        "preventive_measures": [
+          "Use disease-resistant or tolerant tomato varieties when available",
+          "Control weeds in and around the field as they harbor whitefly",
+          "Maintain strict field sanitation and remove infected plant debris",
+          "Avoid overhead irrigation that increases humidity for whitefly spread",
+          "Isolate infected plants and quarantine for monitoring"
+        ],
+        "notes": [
+          "TYLCV is transmitted exclusively by whitefly (Bemisia tabaci) - vector control is critical",
+          "Virus is not seed-borne but primarily transmitted by infected whitefly",
+          "Once established, infected plants may not recover; removal may be necessary",
+          "Viral load increases with time - early intervention critical",
+          "Chemical treatments target the whitefly vector, not the virus itself"
+        ]
+      },
+      {
+        "disease": "Early Blight (Tomato)",
+        "symptoms": [
+          "Brown circular lesions on lower leaves",
+          "Concentric ring patterns on lesions (target-like)",
+          "Yellow halo around lesions",
+          "Progressive defoliation from bottom upward",
+          "Fruit spotting and cracking"
+        ],
+        "organic_treatments": [
+          "Remove lower infected leaves (>30cm from ground) weekly to reduce spore source",
+          "Spray copper fungicide (1% Bordeaux mixture) every 10-14 days",
+          "Apply sulfur dust (2-3g per liter) for preventive coverage",
+          "Prune and improve air circulation around plants to reduce humidity",
+          "Use mulch to prevent soil-borne spore splash on lower leaves"
+        ],
+        "chemical_treatments": [
+          "Spray mancozeb (0.2%) every 10 days starting from pre-flowering",
+          "Use chlorothalonil (0.1%) for early infection control",
+          "Apply metalaxyl (0.1%) for severe outbreaks",
+          "Alternate fungicides (mancozeb + copper) to prevent resistance",
+          "Use azoxystrobin (0.01%) for rapid disease suppression"
+        ],
+        "recovery_time_days": 14,
+        "preventive_measures": [
+          "Use disease-resistant varieties (EB resistance gene)",
+          "Stake and prune plants to improve air circulation",
+          "Avoid overhead irrigation; use drip irrigation instead",
+          "Remove lower leaves proactively (>30cm from soil)",
+          "Practice crop rotation (avoid tomato family plants for 2-3 years)"
+        ],
+        "notes": [
+          "Early blight is caused by fungus Alternaria solani",
+          "Disease is favored by temperatures 24-30°C and high humidity (>85%)",
+          "Spores spread through water splash and rain",
+          "Infections start on lower leaves and move upward if untreated",
+          "Regular scouting (every 3-5 days) is essential for early detection"
+        ]
+      },
+      {
+        "disease": "Late Blight (Tomato)",
+        "symptoms": [
+          "Water-soaked lesions on leaves",
+          "Irregular dark brown patches",
+          "Characteristic white mold on leaf undersides",
+          "Rapid leaf wilting and defoliation",
+          "Firm dark rot on fruit with concentric rings"
+        ],
+        "organic_treatments": [
+          "Remove and destroy infected leaves and fruits immediately",
+          "Spray copper-based fungicide (Bordeaux 1%) every 7 days",
+          "Apply sulfur dust weekly for preventive coverage",
+          "Improve drainage and air circulation by pruning lower canopy",
+          "Avoid overhead irrigation; water at soil level only"
+        ],
+        "chemical_treatments": [
+          "Spray metalaxyl (0.1%) at first sign of disease",
+          "Use mancozeb (0.2%) every 7-10 days for suppression",
+          "Apply chlorothalonil (0.1%) in combination with copper",
+          "Use cymoxanil (0.075%) for rapid control of new infections",
+          "Alternate metalaxyl and mancozeb to manage resistance"
+        ],
+        "recovery_time_days": 18,
+        "preventive_measures": [
+          "Use resistant varieties (e.g., resistant to Phytophthora infestans)",
+          "Improve field sanitation and remove crop residues",
+          "Maintain spacing for adequate air circulation",
+          "Apply preventive fungicides during high-risk weather (cool, wet)",
+          "Practice crop rotation (2-3 year gap from Solanum family crops)"
+        ],
+        "notes": [
+          "Late blight is caused by Phytophthora infestans (oomycete, not true fungus)",
+          "Disease is highly destructive in cool, wet conditions (<20°C, high humidity)",
+          "White mold on leaf undersides is diagnostic of late blight",
+          "Can spread rapidly in epidemic conditions - immediate action required",
+          "Disease affects both foliage and fruit - both must be treated"
+        ]
+      }
+    ],
+    "Apple": [
+      {
+        "disease": "Apple Scab",
+        "symptoms": [
+          "Dark olive-brown lesions on leaves",
+          "Velvety, raised lesions on fruit surface",
+          "Cracking and distortion of fruit",
+          "Premature leaf drop",
+          "Twiggy growth appearance"
+        ],
+        "organic_treatments": [
+          "Remove fallen leaves and infected fruit to eliminate fungal source",
+          "Spray sulfur dust (2-3g/liter) every 10-14 days starting pre-bloom",
+          "Use sulfur-lime spray during dormant season on branches",
+          "Prune to improve air circulation and reduce humidity",
+          "Apply neem oil during growing season for preventive coverage"
+        ],
+        "chemical_treatments": [
+          "Spray mancozeb (0.2%) every 10 days from bud break to harvest",
+          "Use pentachlorophenol (0.3%) for severe infections",
+          "Apply dodine (0.2%) during post-petal fall period",
+          "Use captan (0.1%) for early season protection",
+          "Alternate fungicides to prevent resistance development"
+        ],
+        "recovery_time_days": 21,
+        "preventive_measures": [
+          "Use disease-resistant apple varieties (Malus resistant cultivars)",
+          "Ensure proper tree spacing for air circulation",
+          "Prune and thin branches to reduce humidity inside canopy",
+          "Collect and destroy infected leaves during dormancy",
+          "Apply dormant-season sulfur sprays in late winter"
+        ],
+        "notes": [
+          "Apple scab is caused by fungus Venturia inaequalis",
+          "Disease requires leaf wetness for 8+ hours during dormancy",
+          "Spores primarily from fallen leaves in spring",
+          "Preventive sprays more effective than curative treatments",
+          "Disease severity peaks in cool, wet spring conditions"
+        ]
+      },
+      {
+        "disease": "Powdery Mildew (Apple)",
+        "symptoms": [
+          "White powder-like coating on leaves",
+          "Young leaf curling and distortion",
+          "Stunted leaf growth",
+          "Bloom on young shoots and fruit",
+          "Reduced fruit size and quality"
+        ],
+        "organic_treatments": [
+          "Spray sulfur dust (2-3g/liter) weekly during growing season",
+          "Use neem oil (2-3%) every 7-10 days for suppression",
+          "Apply potassium bicarbonate (1.5%) for early infection control",
+          "Prune off heavily infected shoots and burn them",
+          "Improve canopy air circulation through selective pruning"
+        ],
+        "chemical_treatments": [
+          "Spray quinol (0.15%) or sulfur-based fungicide",
+          "Use triazole fungicides like tebuconazole (0.05%) early season",
+          "Apply wettable sulfur (0.2%) every 10 days",
+          "Use microbe-based fungicides (Bacillus subtilis) as alternative",
+          "Rotate chemical classes to prevent resistance"
+        ],
+        "recovery_time_days": 10,
+        "preventive_measures": [
+          "Plant resistant or tolerant apple cultivars",
+          "Maintain adequate tree spacing for air circulation",
+          "Avoid excessive nitrogen fertilization (promotes soft growth)",
+          "Provide supplemental irrigation during dry spells",
+          "Remove infected shoots during dormant season"
+        ],
+        "notes": [
+          "Powdery mildew is caused by Podosphaera leucotricha",
+          "Disease thrives in moderate temperatures (15-25°C) with low humidity",
+          "Symptoms appear on young leaves first",
+          "Disease does NOT require water for infection (unlike other fungal diseases)",
+          "Early prevention more important than curative sprays"
+        ]
+      }
+    ],
+    "Grape": [
+      {
+        "disease": "Powdery Mildew (Grape)",
+        "symptoms": [
+          "White powdery coating on leaves and shoots",
+          "Leaf curling and distortion",
+          "Gray coating on green berries",
+          "Cracking of infected fruit",
+          "Reduced berry quality and wine flavor"
+        ],
+        "organic_treatments": [
+          "Spray sulfur dust (3-4g/liter) weekly starting pre-bloom",
+          "Use neem oil (2-3%) every 7-10 days as preventive",
+          "Apply potassium sulfide solution (0.5%) every 10 days",
+          "Prune off heavily infected shoots and destroy",
+          "Improve air circulation by strategic canopy management"
+        ],
+        "chemical_treatments": [
+          "Spray quinol (0.15%) or sulfur-based fungicide every 10 days",
+          "Use triazole fungicides (tebuconazole 0.05%) early in season",
+          "Apply DMI fungicides (myclobutanil 0.025%) for rapid control",
+          "Use wettable sulfur (0.3%) pre-bloom and post-bloom",
+          "Alternate fungicide classes to manage resistance"
+        ],
+        "recovery_time_days": 12,
+        "preventive_measures": [
+          "Use disease-resistant grape varieties when available",
+          "Prune to ensure good canopy air circulation",
+          "Avoid excess nitrogen that promotes tender shoots",
+          "Space rows to maximize sun exposure and air flow",
+          "Remove infected fruit and leaves before they spread spores"
+        ],
+        "notes": [
+          "Powdery mildew is caused by Erysiphe necator (uncinula)",
+          "Disease favors 20-27°C with moderate humidity",
+          "Infection occurs WITHOUT water on leaves (unlike downy mildew)",
+          "Fungicides applied before spore germination are most effective",
+          "Regular scouting critical from pre-bloom through véraison"
+        ]
+      },
+      {
+        "disease": "Downy Mildew (Grape)",
+        "symptoms": [
+          "Yellow angular lesions on leaf surface",
+          "Dense white mold on leaf undersides",
+          "Abrupt wilting and blackening of shoots",
+          "Berry shriveling or rotting",
+          "Girdling of petioles and tendrils"
+        ],
+        "organic_treatments": [
+          "Remove and destroy infected leaves and shoots",
+          "Spray copper-based fungicide (Bordeaux 1%) every 7-10 days",
+          "Use sulfur dust (3-4g/liter) for preventive coverage",
+          "Improve drainage to reduce leaf wetness duration",
+          "Avoid overhead irrigation; use drip irrigation instead"
+        ],
+        "chemical_treatments": [
+          "Spray metalaxyl (0.1%) at first sign of infection",
+          "Use mancozeb (0.2%) every 7-10 days for suppression",
+          "Apply cymoxanil (0.075%) combined with copper",
+          "Use fosetyl-aluminum (0.2%) for systemic protection",
+          "Rotate fungicides to prevent resistance development"
+        ],
+        "recovery_time_days": 16,
+        "preventive_measures": [
+          "Use resistant or tolerant grape varieties (V. labrusca, hybrids)",
+          "Maintain good canopy air circulation through pruning",
+          "Avoid overhead irrigation and early morning leaf wetness",
+          "Remove infected leaves weekly during susceptible period",
+          "Practice strict field sanitation with plant debris removal"
+        ],
+        "notes": [
+          "Downy mildew is caused by oomycete Plasmopara viticola",
+          "Disease requires leaves wet for 12+ hours for infection",
+          "White mold on leaf underside is diagnostic feature",
+          "Disease can rapidly defoliate vines if untreated",
+          "Preventive fungicides more effective than curative action"
+        ]
+      },
+      {
+        "disease": "Black Rot (Grape)",
+        "symptoms": [
+          "Circular dark brown lesions on leaves",
+          "Gray-brown spots on fruit",
+          "Fruit mummification and wrinkled appearance",
+          "Stem cankers and shoot dieback",
+          "Black fruit rot during ripening"
+        ],
+        "organic_treatments": [
+          "Remove and destroy infected fruit, leaves, and canes",
+          "Spray copper fungicide (Bordeaux 1%) every 10-14 days",
+          "Apply sulfur dust (3-4g/liter) for preventive coverage",
+          "Prune to improve air circulation and reduce humidity",
+          "Burn infected pruning materials to eliminate fungal source"
+        ],
+        "chemical_treatments": [
+          "Spray mancozeb (0.2%) every 10 days starting pre-bloom",
+          "Use thiophanate methyl (0.1%) for curative control",
+          "Apply captan (0.1%) for early-season protection",
+          "Use wettable sulfur (0.3%) as protective spray",
+          "Rotate fungicides to prevent resistance"
+        ],
+        "recovery_time_days": 20,
+        "preventive_measures": [
+          "Use black rot-resistant grape varieties (native, hybrid cultivars)",
+          "Prune aggressively to improve air circulation",
+          "Remove infected fruit immediately to stop spread",
+          "Rake and remove fallen fruit and leaves in fall",
+          "Apply fungicides preventively when conditions favor disease"
+        ],
+        "notes": [
+          "Black rot is caused by fungus Guignardia bidwellii",
+          "Disease favors warm, wet conditions (24-27°C)",
+          "Spores overwinter in infected fruit (mummies) on ground",
+          "Infection occurs during wet periods in warm weather",
+          "Disease can destroy entire crop if left uncontrolled"
+        ]
+      }
+    ]
+  }
+}

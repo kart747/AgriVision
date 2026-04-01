@@ -6,7 +6,7 @@ opencv-python-headless
 pillow
 numpy
 groq
-grad-cam
+grad-cam>=1.5.5
 scikit-learn
 python-multipart
 python-dotenv

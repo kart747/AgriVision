@@ -1,0 +1,39 @@
+{
+  "regions": [
+    {
+      "region": "Mangalore, Karnataka, India",
+      "expected_crops": ["Tomato", "Grape", "Coconut"],
+      "climate": "Tropical, high humidity, monsoon",
+      "season_info": "Year-round farming with monsoon (June-September)",
+      "contact": "Karnataka Agricultural Extension, Mangalore"
+    },
+    {
+      "region": "Punjab, India",
+      "expected_crops": ["Wheat", "Tomato", "Apple"],
+      "climate": "Temperate, continental",
+      "season_info": "Winter wheat (Oct-May), summer crops (Apr-Oct)",
+      "contact": "Punjab Agricultural Department"
+    },
+    {
+      "region": "Himachal Pradesh, India",
+      "expected_crops": ["Apple", "Tomato", "Grape"],
+      "climate": "Cool, temperate, moderate humidity",
+      "season_info": "Summer crops (May-Oct), winter rest",
+      "contact": "Himachal Pradesh Horticulture Department"
+    },
+    {
+      "region": "Maharashtra, India",
+      "expected_crops": ["Tomato", "Grape", "Onion"],
+      "climate": "Semi-arid to tropical, varied by region",
+      "season_info": "Monsoon-dependent, kharif and rabi seasons",
+      "contact": "Maharashtra Agricultural Department"
+    },
+    {
+      "region": "Tamil Nadu, India",
+      "expected_crops": ["Tomato", "Coconut", "Spices"],
+      "climate": "Tropical, high humidity",
+      "season_info": "Two crop seasons: summer and winter",
+      "contact": "Tamil Nadu Agricultural Department, Chennai"
+    }
+  ]
+}
