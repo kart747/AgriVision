@@ -316,6 +316,45 @@
           "Infection occurs during wet periods in warm weather",
           "Disease can destroy entire crop if left uncontrolled"
         ]
+      },
+      {
+        "disease": "Esca (Black Measles)",
+        "symptoms": [
+          "Tiger-stripe chlorosis and necrosis on leaves",
+          "Dark speckling and sunken lesions on berries",
+          "Sudden vine decline and reduced vigor",
+          "Brown-black streaking in trunk wood",
+          "Premature leaf drying in hot conditions"
+        ],
+        "organic_treatments": [
+          "Prune and remove severely infected arms during dry weather",
+          "Disinfect pruning tools between vines to reduce spread",
+          "Apply Trichoderma-based wound protectant after pruning",
+          "Remove dead wood and improve canopy ventilation",
+          "Maintain balanced irrigation to reduce stress on affected vines"
+        ],
+        "chemical_treatments": [
+          "Apply registered trunk-disease wound sealants immediately after pruning",
+          "Use fungicide paint/paste on pruning wounds as per local label",
+          "Use foliar protectant fungicide program to reduce secondary infections",
+          "Alternate active ingredients to reduce resistance pressure",
+          "Follow local viticulture guidelines for Esca management"
+        ],
+        "recovery_time_days": 30,
+        "preventive_measures": [
+          "Prune in dry conditions and avoid rainy periods",
+          "Protect all major pruning wounds",
+          "Train workers on sanitation and tool disinfection",
+          "Maintain vine vigor with balanced nutrition",
+          "Monitor vineyards early for tiger-stripe symptom onset"
+        ],
+        "notes": [
+          "Esca is a complex trunk disease involving multiple fungal pathogens",
+          "Curative options are limited; prevention and sanitation are critical",
+          "Heat stress can worsen symptom expression",
+          "Early vine management can slow progression",
+          "Integrated pruning-wound protection is the most reliable strategy"
+        ]
       }
     ]
   }
