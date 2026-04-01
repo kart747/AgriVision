@@ -64,6 +64,7 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - training/test_pretrained.py: Direct model inference test on 3 internet-downloaded crop samples (complete).
 - training/tmp_test_images/: Downloaded training-test images (generated artifact).
 - frontend/: Browser-openable frontend test tooling (complete for testing scope).
+- frontend/index.html: Friend's richer landing/dashboard frontend integrated as primary frontend entry (complete).
 - frontend/test_ui.html: Single-file manual API testing UI with predict/drone tabs and health indicator (complete).
 - COPILOT_MEMORY.md: This persistent project memory ledger (complete, must be updated on every change).
 - Completion Summary: Core backend pipeline is complete; model quality remains in-progress pending friend-trained crop-specific checkpoint delivery.
@@ -149,6 +150,20 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Commit: e514f0d (Add minimal frontend test UI and update project memory).
 - Push: main -> origin/main.
 
+- 2026-04-01: Integrated friend's frontend implementation into active project frontend.
+- Added: frontend/index.html from friend commit ff5e707 (agrigo.html source).
+- Kept: frontend/test_ui.html for API validation utility.
+- Updated: COPILOT_MEMORY.md to reflect frontend integration status.
+- Commit: 33fcf21 (Integrate friend's frontend as primary page).
+- Push: main -> origin/main.
+
+- 2026-04-01: Integrated friend's trained model artifacts from non-main branch.
+- Source branch: origin/add-training-script.
+- Pulled files only (no branch merge): backend/model/weights/best_model.pth and backend/model/weights/class_names.json.
+- Detected class mapping count: 16 (Tomato/Apple/Grape subset classes).
+- Updated: backend/model/predict.py startup log to print "Friend's trained model loaded: X classes".
+- Validation: /health returned model_loaded=true and backend/test_api.py passed health/classes/drone-scan (predict blur gate rejection expected on unclear image).
+
 === SECTION 6: CURRENT STATUS ===
 - 100% Complete:
 - FastAPI backend endpoints and pipeline scaffolding.
@@ -160,9 +175,10 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Automated pretrained download script and direct model test script.
 - GitHub integration and push workflow.
 - Minimal browser-based frontend test utility for /predict and /drone-scan.
+- Friend's richer frontend is now integrated as primary frontend page (frontend/index.html).
 
 - In Progress:
-- Final production-quality model performance for Tomato/Apple/Grape (current fallback checkpoint is compatibility-first, not high-accuracy disease-specific fine-tuned result).
+- Final production-quality model calibration/benchmarking for Tomato/Apple/Grape with friend's active checkpoint now integrated (16-class subset).
 - Stable curated demo test image set with disease-ground-truth certainty.
 
 - Blocked:
@@ -170,10 +186,10 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Availability of high-quality public HF/Kaggle checkpoints with directly compatible architecture metadata is inconsistent.
 
 - Next Steps:
-- Replace fallback checkpoint with Friend 1 fine-tuned model weights (18-class preferred).
+- Decide whether to expand friend's current 16-class subset to full planned 18-class crop scope.
 - Lock a local demo image pack committed under repo for deterministic testing.
 - Re-run backend/test_api.py with curated leaf images that pass blur gate.
-- Align Friend 3 final UI with the tested API behavior from frontend/test_ui.html.
+- Connect frontend/index.html interactions end-to-end with latest backend APIs if additional behavior changes are requested.
 
 === SECTION 7: KNOWN ISSUES ===
 - Issue: Internet image URLs used in test scripts are unstable (403/404/503).

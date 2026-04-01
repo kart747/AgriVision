@@ -34,7 +34,7 @@ class DiseasePredictor:
         self.model = self._load_model()
         self.model_loaded = self.model is not None
         if self.model_loaded:
-            print(f"[AgriVision] Model loaded: {self.detected_num_classes} classes detected")
+            print(f"Friend's trained model loaded: {self.detected_num_classes} classes")
 
     def _load_class_names(self) -> List[str]:
         if not self.classes_path.exists():
