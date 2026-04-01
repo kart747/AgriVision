@@ -172,6 +172,19 @@
             margin-bottom: 40px;
             line-height: 1.8;
         }
+
+        .backend-status {
+            margin-top: 16px;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--spore);
+            min-height: 20px;
+        }
+
+        .backend-status.error {
+            color: var(--blight);
+        }
         
         .hero-cta {
             display: flex;
@@ -317,6 +330,7 @@
         <div class="hero-content">
             <h1 class="hero-headline">THE FIELD SEES BACK</h1>
             <p class="hero-subline">AI-Powered Crop Disease Detection & Intelligence Platform</p>
+            <div id="backendStatus" class="backend-status">Checking backend connection...</div>
             <div class="hero-cta">
                 <a href="detect.html" class="btn-primary">Scan Your Crop →</a>
                 <a href="#how-it-works" class="btn-secondary">Learn More</a>
@@ -387,20 +401,7 @@
     <!-- Crops Section -->
     <section class="section" id="crops">
         <h2 class="section-title">Supported Crops</h2>
-        <div class="features-grid">
-            <div class="feature-card reveal">
-                <h3>🍅 Tomato</h3>
-                <p>Early Blight, Leaf Mold, Septoria Leaf Spot, and 6 more diseases tracked with 91% avg confidence.</p>
-            </div>
-            <div class="feature-card reveal">
-                <h3>🍎 Apple</h3>
-                <p>Apple Scab, Cedar Apple Rust, Powdery Mildew, and 4 more conditions identified with 89% accuracy.</p>
-            </div>
-            <div class="feature-card reveal">
-                <h3>🍇 Grape</h3>
-                <p>Black Rot, Esca, Powdery Mildew, and 3 more grape diseases detected with 93% confidence.</p>
-            </div>
-        </div>
+        <div id="cropsGrid" class="features-grid"></div>
     </section>
     
     <!-- Spore Particle Animation -->
@@ -476,6 +477,83 @@
         
         animateSpores();
         
+        const API_BASE = 'http://127.0.0.1:8000';
+        const backendStatus = document.getElementById('backendStatus');
+        const cropsGrid = document.getElementById('cropsGrid');
+
+        function toTitleCase(text) {
+            return String(text || '')
+                .toLowerCase()
+                .replace(/\b[a-z]/g, (ch) => ch.toUpperCase());
+        }
+
+        function formatDiseaseClass(raw) {
+            const value = String(raw || '');
+            if (!value.includes('___')) {
+                return toTitleCase(value.replace(/_/g, ' '));
+            }
+            const [crop, disease] = value.split('___');
+            return `${toTitleCase(crop.replace(/_/g, ' '))} — ${toTitleCase(disease.replace(/_/g, ' '))}`;
+        }
+
+        function renderCrops(classNames) {
+            if (!cropsGrid) return;
+
+            const grouped = new Map();
+            classNames.forEach((entry) => {
+                const [crop] = String(entry).split('___');
+                const cropLabel = toTitleCase((crop || 'Unknown').replace(/_/g, ' '));
+                if (!grouped.has(cropLabel)) {
+                    grouped.set(cropLabel, []);
+                }
+                grouped.get(cropLabel).push(entry);
+            });
+
+            cropsGrid.innerHTML = '';
+            grouped.forEach((entries, cropLabel) => {
+                const card = document.createElement('div');
+                card.className = 'feature-card reveal';
+                const preview = entries.slice(0, 3).map(formatDiseaseClass).join(', ');
+                const more = entries.length > 3 ? `, and ${entries.length - 3} more` : '';
+                card.innerHTML = `
+                    <h3>${cropLabel}</h3>
+                    <p>${preview}${more}</p>
+                `;
+                cropsGrid.appendChild(card);
+            });
+        }
+
+        async function connectBackend() {
+            try {
+                const healthResp = await fetch(`${API_BASE}/health`);
+                if (!healthResp.ok) {
+                    throw new Error(`Health check failed (${healthResp.status})`);
+                }
+                const health = await healthResp.json();
+
+                const classesResp = await fetch(`${API_BASE}/classes`);
+                if (!classesResp.ok) {
+                    throw new Error(`Classes fetch failed (${classesResp.status})`);
+                }
+                const classesPayload = await classesResp.json();
+                const classNames = Array.isArray(classesPayload.classes) ? classesPayload.classes : [];
+
+                renderCrops(classNames);
+                if (backendStatus) {
+                    backendStatus.textContent = `Backend connected · model ${health.model_loaded ? 'ready' : 'not ready'} · ${classNames.length} classes loaded`;
+                    backendStatus.classList.remove('error');
+                }
+            } catch (error) {
+                if (backendStatus) {
+                    backendStatus.textContent = 'Backend offline — start FastAPI on port 8000';
+                    backendStatus.classList.add('error');
+                }
+                if (cropsGrid) {
+                    cropsGrid.innerHTML = '<div class="feature-card"><h3>Backend Not Connected</h3><p>Could not load classes from the API.</p></div>';
+                }
+            }
+        }
+
         // Scroll reveal animation
         const observerOptions = {
             threshold: 0.15,
@@ -496,6 +574,8 @@
         document.querySelectorAll('.reveal').forEach(el => {
             observer.observe(el);
         });
+
+        connectBackend();
     </script>
 </body>
 </html>
