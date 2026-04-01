@@ -35,7 +35,7 @@ Output contract (MANDATORY):
 - Return ONLY valid JSON. No markdown, no code fences, no commentary.
 - Return exactly one JSON object with keys:
     source, crop, disease, summary, organic_treatment, chemical_treatment,
-    recovery_time, preventive_measures, warnings, notes
+    recovery_time, preventive_measures, warnings, notes, estimated_cost
 - Set source = "llm".
 - Keep list fields as arrays of short strings.
 
@@ -47,6 +47,8 @@ Quality rules:
 - If confidence is low (<0.60), include a warning to re-capture a clearer image and verify before spraying.
 - If severity is Severe/Critical, prioritize immediate containment and crop-loss warning.
 - Respect regional context (location + season/time) for timing and prevention.
+- If live weather indicates strong wind or high heat, explicitly warn against spraying at that time.
+- Use the supplied market pricing context to estimate treatment cost.
 - Do not invent diseases, chemicals, or regulations.
 
 Formatting limits:
@@ -56,6 +58,7 @@ Formatting limits:
 - preventive_measures: 3-6 items.
 - warnings: 0-4 items.
 - notes: 0-4 items.
+- estimated_cost: one short string.
 """
     return prompt.strip()
 
@@ -81,6 +84,7 @@ def build_user_prompt(prediction_context: Dict, kb_entry: Dict) -> str:
     severity = prediction_context.get("severity", "Unknown")
     location = prediction_context.get("location", "Unknown")
     time_context = prediction_context.get("time_context", "Unknown")
+    live_weather = prediction_context.get("live_weather", "Weather unavailable")
     
     # Knowledge base info
     symptoms = kb_entry.get("symptoms", [])
@@ -100,6 +104,7 @@ def build_user_prompt(prediction_context: Dict, kb_entry: Dict) -> str:
         f"- severity: {severity}",
         f"- location: {location}",
         f"- time_context: {time_context}",
+        f"- live_weather: {live_weather}",
         f"- confidence_gate_status: {confidence_gate} (threshold 0.60)",
         "",
         "KNOWLEDGE_BASE_SIGNALS:",
@@ -119,6 +124,13 @@ def build_user_prompt(prediction_context: Dict, kb_entry: Dict) -> str:
     else:
         lines.append("- notes:")
         lines.append("  - No additional notes available")
+
+    lines.extend([
+        "- market_pricing_context:",
+        "  - Neem-based spray (~₹250/L)",
+        "  - Copper Fungicide (~₹400/kg)",
+        "  - Generic Fungicide (~₹300/L)",
+    ])
     
     lines.extend([
         "",
@@ -128,6 +140,7 @@ def build_user_prompt(prediction_context: Dict, kb_entry: Dict) -> str:
         "- Include immediate first-step actions in organic_treatment[0] when possible.",
         "- Keep language simple for farmers while remaining technically correct.",
         "- If confidence_gate_status is LOW, include a warning about re-capture/verification before chemical spray.",
+        "- Include a short estimated_cost string based on the likely treatment category.",
     ])
     
     return "\n".join(lines)
@@ -174,6 +187,7 @@ Provide both organic and chemical options suitable for small-scale farming.""",
             "crop": "Tomato",
             "disease": "Tomato Yellow Leaf Curl Virus",
             "summary": "TYLCV is a critical viral disease affecting tomato crops. Whitefly vectors transmit the virus. Early detection and management are essential.",
+            "estimated_cost": "Approx. ₹250/L",
             "organic_treatment": [
                 "Remove infected plants immediately to prevent spread",
                 "Spray neem oil (5% solution) on plant surfaces every 7 days",
@@ -228,7 +242,7 @@ def validate_prompt_response(response_str: str) -> bool:
             "source", "crop", "disease", "summary",
             "organic_treatment", "chemical_treatment",
             "recovery_time", "preventive_measures",
-            "warnings", "notes"
+            "warnings", "notes", "estimated_cost"
         ]
         return all(field in data for field in required_fields)
     except (json.JSONDecodeError, TypeError):
@@ -259,7 +273,7 @@ def get_prompt_metadata() -> Dict:
             "source", "crop", "disease", "summary",
             "organic_treatment", "chemical_treatment",
             "recovery_time", "preventive_measures",
-            "warnings", "notes"
+            "warnings", "notes", "estimated_cost"
         ],
         "optional_output_fields": [],
     }

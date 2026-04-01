@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<!-- saved from url=(0042)https://kokos.ai/Yenepoya-AIHackathon.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matrix Fusion 4.0 - AI Hackathon 2026</title>
+  <link href="./Matrix Fusion 4.0 - AI Hackathon 2026_files/css2" rel="stylesheet">
+  <style>
+    :root {
+      --green-deep: #0d3b2e;
+      --green-mid: #1a5c42;
+      --green-bright: #2d9b6f;
+      --green-light: #4fc490;
+      --green-pale: #b2f0d6;
+      --amber: #f5a623;
+      --amber-dark: #c47d0e;
+      --cream: #f9f5ec;
+      --ink: #0f1f16;
+      --ink-soft: #2d4035;
+      --muted: #6b8c7a;
+      --border: rgba(45, 155, 111, 0.18);
+      --gold: #d4a843;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--green-deep);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .header-grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      min-height: 320px;
+    }
+
+    .header-left {
+      padding: 52px 56px 48px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .header-right {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-bg-art {
+      position: absolute;
+      inset: 0;
+      background: var(--green-mid);
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 40px 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .leaf-art {
+      width: 260px;
+      height: 260px;
+      opacity: 0.18;
+    }
+
+    .hackathon-label {
+      display: inline-block;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--green-light);
+      border: 1px solid rgba(79, 196, 144, 0.35);
+      padding: 5px 14px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+    }
+
+    .main-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 46px;
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .main-title span {
+      color: var(--green-light);
+    }
+
+    .subtitle {
+      font-size: 16px;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.65);
+      max-width: 480px;
+      margin-bottom: 28px;
+      letter-spacing: 0.01em;
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .meta-chip .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green-light);
+      flex-shrink: 0;
+    }
+
+    /* ── THEME BAND ── */
+    .theme-band {
+      background: var(--amber);
+      padding: 13px 56px;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-band span.label {
+      opacity: 0.55;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 56px 40px 80px;
+    }
+
+    /* ── SECTION SYSTEM ── */
+    .section {
+      margin-bottom: 52px;
+    }
+
+    .section-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--green-bright);
+      margin-bottom: 6px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--green-deep);
+      margin-bottom: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      margin-bottom: 14px;
+      color: var(--ink-soft);
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ── COMPANY CARD ── */
+    .company-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--green-bright);
+      border-radius: 6px;
+      padding: 24px 28px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 40px;
+    }
+
+    .company-card .name {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--green-deep);
+      grid-column: 1 / -1;
+      margin-bottom: 4px;
+    }
+
+    .stat-pair {}
+
+    .stat-pair .num {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--green-bright);
+      line-height: 1;
+    }
+
+    .stat-pair .lbl {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+    }
+
+    /* ── PROBLEM BOX ── */
+    .problem-box {
+      background: var(--green-deep);
+      color: #fff;
+      border-radius: 8px;
+      padding: 32px 36px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .problem-box::before {
+      content: '!';
+      position: absolute;
+      right: 36px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Syne', sans-serif;
+      font-size: 120px;
+      font-weight: 800;
+      opacity: 0.06;
+      line-height: 1;
+    }
+
+    .problem-box h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--green-light);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+
+    .problem-box p {
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    /* ── PIPELINE (REDESIGNED) ── */
+    .pipeline-section {
+      margin-bottom: 52px;
+    }
+
+    .pipeline-track {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .pipeline-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      position: relative;
+    }
+
+    .pipeline-connector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 6px 0;
+      position: relative;
+    }
+
+    .pipeline-connector svg {
+      display: block;
+    }
+
+    .pipe-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px 20px 18px;
+      position: relative;
+      transition: box-shadow 0.25s, border-color 0.25s;
+    }
+
+    .pipe-card:hover {
+      border-color: var(--green-bright);
+      box-shadow: 0 6px 24px rgba(13, 59, 46, 0.1);
+    }
+
+    .pipe-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .pipe-icon-wrap {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .pipe-icon-wrap svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .pipe-stage-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--green-bright);
+      line-height: 1;
+    }
+
+    .pipe-stage-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--green-deep);
+      line-height: 1.2;
+      margin-top: 2px;
+    }
+
+    .pipe-card-body {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .pipe-card-body strong {
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+
+    /* Arrow connectors between cards in a row */
+    .pipeline-row::before,
+    .pipeline-row::after {
+      display: none;
+    }
+
+    .pipe-arrow-h {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .pipe-arrow-h svg {
+      display: block;
+    }
+
+    /* Row connector arrows */
+    .pipeline-arrows-row {
+      position: relative;
+      height: 0;
+    }
+
+    .pipeline-arrows-row .h-arrow {
+      position: absolute;
+      top: -50%;
+      width: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Pipeline note */
+    .pipeline-note {
+      margin-top: 20px;
+      background: var(--green-deep);
+      border-radius: 6px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pipeline-note-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(79, 196, 144, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .pipeline-note-icon svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .pipeline-note p {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.75);
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    .pipeline-note p strong {
+      color: var(--green-light);
+      font-weight: 600;
+    }
+
+    /* Horizontal arrow overlays */
+    .pipeline-row-wrapper {
+      position: relative;
+    }
+
+    .h-connector {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 3;
+      width: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .h-connector.pos-1 {
+      left: calc(33.333% - 8px);
+    }
+
+    .h-connector.pos-2 {
+      left: calc(66.666% - 8px);
+    }
+
+    .h-connector svg {
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
+    }
+
+    /* Vertical connector */
+    .v-connector {
+      display: flex;
+      justify-content: flex-end;
+      padding-right: calc(16.666% - 8px);
+      height: 40px;
+      align-items: center;
+    }
+
+    .v-connector svg {
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
+    }
+
+
+    /* ── REQUIREMENTS GRID ── */
+    .req-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .req-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px 24px;
+    }
+
+    .req-card.full {
+      grid-column: 1 / -1;
+    }
+
+    .req-card .req-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--green-bright);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .req-card h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--green-deep);
+      margin-bottom: 10px;
+    }
+
+    .req-card ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .req-card ul li {
+      font-size: 13.5px;
+      color: var(--ink-soft);
+      padding: 5px 0 5px 18px;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+      word-break: break-all;
+    }
+
+    .req-card ul li:last-child {
+      border-bottom: none;
+    }
+
+    .req-card ul li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--green-bright);
+      font-size: 12px;
+      top: 6px;
+    }
+
+    .req-card ul li strong {
+      color: var(--green-deep);
+      font-weight: 500;
+    }
+
+    /* ── METRIC ROW ── */
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .metric-chip {
+      background: var(--green-pale);
+      border-radius: 6px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+
+    .metric-chip .metric-name {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--green-mid);
+      margin-bottom: 4px;
+    }
+
+    .metric-chip .metric-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--green-deep);
+    }
+
+    /* ── SCORING TABLE ── */
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .score-table th {
+      background: var(--green-deep);
+      color: rgba(255, 255, 255, 0.9);
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 12px 20px;
+      text-align: left;
+    }
+
+    .score-table td {
+      padding: 11px 20px;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink-soft);
+    }
+
+    .score-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .score-table tr:nth-child(even) td {
+      background: rgba(45, 155, 111, 0.04);
+    }
+
+    .score-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--green-bright);
+      transition: width 0.3s;
+    }
+
+    .score-pct {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green-deep);
+      min-width: 36px;
+    }
+
+    /* ── CONTEXT ENGINE ── */
+    .context-engine {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px 32px;
+    }
+
+    .context-engine h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--green-deep);
+      margin-bottom: 16px;
+    }
+
+    .ctx-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .ctx-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .ctx-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 36px;
+    }
+
+    .ctx-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--green-pale);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .ctx-line {
+      width: 2px;
+      flex: 1;
+      background: var(--border);
+      min-height: 20px;
+    }
+
+    .ctx-content {
+      padding: 6px 0 20px;
+      flex: 1;
+    }
+
+    .ctx-content .ctx-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green-deep);
+    }
+
+    .ctx-content .ctx-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── VALIDATION ── */
+    .validation-layers {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .vlayer {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 16px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 18px;
+    }
+
+    .vlayer .layer-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--green-bright);
+    }
+
+    .vlayer .layer-desc {
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+
+    .vlayer.crit {
+      border-left: 3px solid var(--amber);
+    }
+
+    .vlayer.high {
+      border-left: 3px solid var(--green-bright);
+    }
+
+    .vlayer.bonus {
+      border-left: 3px solid var(--green-light);
+      opacity: 0.8;
+    }
+
+    /* ── BONUS FEATURES ── */
+    .bonus-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .bonus-chip {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+
+    .bonus-chip .b-icon {
+      font-size: 20px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .bonus-chip .b-label {
+      font-weight: 500;
+      color: var(--green-deep);
+      margin-bottom: 2px;
+      font-size: 13px;
+    }
+
+    .bonus-chip .b-pts {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--amber-dark);
+    }
+
+    /* ── DISQUALIFICATION ── */
+    .dq-box {
+      background: #fff1f0;
+      border: 1px solid #fec9c6;
+      border-left: 4px solid #e53e3e;
+      border-radius: 6px;
+      padding: 20px 24px;
+    }
+
+    .dq-box h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #c53030;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+
+    .dq-box ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .dq-box ul li {
+      font-size: 13.5px;
+      color: #742a2a;
+      padding: 4px 0 4px 20px;
+      position: relative;
+    }
+
+    .dq-box ul li::before {
+      content: '✕';
+      position: absolute;
+      left: 0;
+      color: #e53e3e;
+      font-size: 11px;
+      top: 6px;
+    }
+
+    /* ── DELIVERABLES ── */
+    .deliverables-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .del-card {
+      background: var(--green-deep);
+      border-radius: 6px;
+      padding: 18px 18px;
+      color: #fff;
+    }
+
+    .del-card .del-icon {
+      font-size: 22px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .del-card .del-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green-light);
+      margin-bottom: 4px;
+    }
+
+    .del-card .del-desc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 1.5;
+    }
+
+    /* ── SAMPLE OUTPUT ── */
+    .sample-output {
+      background: var(--ink);
+      border-radius: 8px;
+      padding: 24px 28px;
+      font-family: 'DM Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      color: #e2e8e5;
+      line-height: 1.8;
+    }
+
+    .sample-output .so-key {
+      color: var(--green-light);
+    }
+
+    .sample-output .so-val {
+      color: #fff;
+    }
+
+    .sample-output .so-head {
+      color: var(--amber);
+      font-weight: 600;
+    }
+
+    .sample-output .so-item {
+      color: #9ed9be;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 40px 0;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      background: var(--green-deep);
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 12px;
+      text-align: center;
+      padding: 24px 40px;
+      letter-spacing: 0.04em;
+    }
+
+    .footer strong {
+      color: var(--green-light);
+    }
+
+    .footer p {
+      color: rgb(195, 195, 195)
+    }
+
+    /* ── TECH STACK ── */
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .stack-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+
+    .stack-card .opt-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--green-bright);
+      margin-bottom: 8px;
+    }
+
+    .stack-card .opt-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--green-deep);
+      margin-bottom: 8px;
+    }
+
+    .stack-card ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .stack-card ul li {
+      font-size: 12.5px;
+      color: var(--muted);
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stack-card ul li:last-child {
+      border-bottom: none;
+    }
+
+    .stack-card ul li span {
+      color: var(--green-deep);
+      font-weight: 500;
+    }
+
+    /* ── TIERS ── */
+    .tier-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .tier-card {
+      border-radius: 8px;
+      padding: 20px 22px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .tier-card.t1 {
+      border-top: 3px solid var(--green-light);
+    }
+
+    .tier-card.t2 {
+      border-top: 3px solid var(--green-bright);
+    }
+
+    .tier-card.t3 {
+      border-top: 3px solid var(--green-deep);
+    }
+
+    .tier-card .tier-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .t1 .tier-label {
+      color: var(--green-light);
+    }
+
+    .t2 .tier-label {
+      color: var(--green-bright);
+    }
+
+    .t3 .tier-label {
+      color: var(--green-deep);
+    }
+
+    .tier-card h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--green-deep);
+      margin-bottom: 10px;
+    }
+
+    .tier-card ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .tier-card ul li {
+      font-size: 13px;
+      color: var(--ink-soft);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tier-card ul li:last-child {
+      border-bottom: none;
+    }
+
+    @media print {
+      body {
+        font-size: 13px;
+      }
+
+      .header-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header-right {
+        display: none;
+      }
+
+      .page {
+        padding: 32px 24px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .header-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header-right {
+        display: none;
+      }
+
+      .req-grid,
+      .metric-row,
+      .bonus-grid,
+      .deliverables-grid,
+      .stack-grid,
+      .tier-row {
+        grid-template-columns: 1fr;
+      }
+
+      .req-card.full {
+        grid-column: 1;
+      }
+
+      .company-card {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .page {
+        padding: 32px 20px;
+      }
+
+      .header-left {
+        padding: 36px 24px 32px;
+      }
+
+      .theme-band {
+        padding: 13px 24px;
+      }
+
+      .pipeline-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .h-connector {
+        display: none;
+      }
+
+      .v-connector {
+        justify-content: center;
+        padding-right: 0;
+      }
+    }
+  </style>
+<style id="cs-overlay-styles">
+      .cs-overlay-privacy {
+        outline: 2.5px solid #3b82f6 !important;
+        outline-offset: 2px !important;
+        position: relative !important;
+      }
+      .cs-overlay-manipulation {
+        outline: 2.5px solid #ef4444 !important;
+        outline-offset: 2px !important;
+        animation: cs-pulse 2s infinite !important;
+        position: relative !important;
+      }
+      @keyframes cs-pulse {
+        0%   { outline-color: #ef4444; box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+        50%  { outline-color: #f97316; box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+        100% { outline-color: #ef4444; box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+      }
+      .cs-tooltip {
+        position: absolute !important;
+        top: -38px !important;
+        left: 0 !important;
+        background: rgba(17,17,17,0.95) !important;
+        color: #fff !important;
+        font-size: 11px !important;
+        font-family: 'Inter', -apple-system, sans-serif !important;
+        padding: 5px 9px !important;
+        border-radius: 5px !important;
+        white-space: nowrap !important;
+        z-index: 2147483647 !important;
+        pointer-events: none !important;
+        display: none !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+        line-height: 1.4 !important;
+      }
+      .cs-overlay-manipulation:hover .cs-tooltip,
+      .cs-overlay-privacy:hover .cs-tooltip {
+        display: block !important;
+      }
+      .cs-focus-target {
+        outline: 3px solid #ef4444 !important;
+        outline-offset: 4px !important;
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.18), 0 0 24px rgba(239, 68, 68, 0.45) !important;
+        animation: cs-focus-beacon 1.6s ease-in-out 2 !important;
+        scroll-margin-top: 96px !important;
+      }
+      .cs-focus-overlay {
+        position: absolute !important;
+        border: 3px solid #ef4444 !important;
+        border-radius: 10px !important;
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.18), 0 0 28px rgba(239, 68, 68, 0.5) !important;
+        z-index: 9999999 !important;
+        pointer-events: none !important;
+        animation: cs-focus-box-pulse 1.2s ease-in-out 2 !important;
+      }
+      .cs-focus-overlay-label {
+        position: absolute !important;
+        left: -1px !important;
+        top: -28px !important;
+        background: rgba(17, 17, 17, 0.96) !important;
+        color: #f8fafc !important;
+        border: 1px solid rgba(239, 68, 68, 0.85) !important;
+        border-radius: 8px !important;
+        font-size: 11px !important;
+        line-height: 1.1 !important;
+        padding: 5px 8px !important;
+        white-space: nowrap !important;
+        max-width: min(70vw, 420px) !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+      @keyframes cs-focus-beacon {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.42); }
+        60% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      }
+      @keyframes cs-focus-box-pulse {
+        0% { transform: scale(0.995); opacity: 0.88; }
+        50% { transform: scale(1.004); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.96; }
+      }
+    </style></head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-grid">
+      <div class="header-left">
+        <div class="hackathon-label">Matrix Fusion 4.0 - AI Hackathon 2026</div>
+        <h1 class="main-title">AgriVision<br><span>AI Crop Intelligence</span></h1>
+        <p class="subtitle">Build an end-to-end AI system to detect crop diseases from drone imagery and deliver
+          intelligent, geo-aware recovery recommendations.</p>
+        <div class="header-meta">
+          <div class="meta-chip"><span class="dot"></span>Organised by Yenepoya Institute of Technology </div>
+          <div class="meta-chip"><span class="dot"></span> Powered by Kokos.ai </div>
+          <div class="meta-chip"><span class="dot"></span>Engineering Teams · 2–4 Members</div>
+          <div class="meta-chip"><span class="dot"></span>24-Hour Sprint</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="header-bg-art">
+          <svg class="leaf-art" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M100 180 C60 160 20 120 20 70 C20 30 55 10 100 20 C145 10 180 30 180 70 C180 120 140 160 100 180Z" fill="white"></path>
+            <path d="M100 180 L100 20" stroke="#0d3b2e" stroke-width="3"></path>
+            <path d="M100 80 C80 70 55 75 45 90" stroke="#0d3b2e" stroke-width="2" stroke-linecap="round"></path>
+            <path d="M100 100 C120 90 145 95 155 110" stroke="#0d3b2e" stroke-width="2" stroke-linecap="round"></path>
+            <path d="M100 120 C80 110 60 115 50 130" stroke="#0d3b2e" stroke-width="2" stroke-linecap="round"></path>
+            <path d="M100 140 C120 130 140 135 148 150" stroke="#0d3b2e" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="theme-band">
+    <span class="label">Theme</span>
+    "From Leaf to Insight: Building AI Systems for Sustainable Agriculture"
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="page">
+
+    <!-- COMPANY -->
+    <section class="section">
+      <div class="section-label">About the Client</div>
+      <div class="section-title">Mist Agri Corps Ltd</div>
+      <div class="company-card">
+        <div class="name">India's Premier Agro-Farming Enterprise</div>
+        <div class="stat-pair">
+          <div class="num">3,000+</div>
+          <div class="lbl">Acres under management</div>
+        </div>
+        <div class="stat-pair">
+          <div class="num">3</div>
+          <div class="lbl">Crop varieties cultivated in big scale</div>
+        </div>
+        <div class="stat-pair">
+          <div class="num">Multi</div>
+          <div class="lbl">State operations across India</div>
+        </div>
+        <div class="stat-pair">
+          <div class="num">AI-First</div>
+          <div class="lbl">Digital transformation in progress</div>
+        </div>
+      </div>
+      <p style="margin-top:16px;">Crops include tomato, apple and grape. We are going to stick to these crops in the next 5
+        years. Increasing scale has made crop disease detection a major operational challenge — impacting yield, cost,
+        and long-term sustainability.</p>
+    </section>
+
+    <!-- PROBLEM -->
+    <section class="section">
+      <div class="section-label">Challenge</div>
+      <div class="section-title">Problem Statement</div>
+      <div class="problem-box">
+        <h3>Mission Critical</h3>
+        <p>Design and build an AI-powered crop disease intelligence
+          system that analyzes leaf photographs using computer vision, drone/mobile imagery,
+          and large language models, deployable as a local web application for real-time use by field agronomists.</p>
+      </div>
+    </section>
+
+    <!-- PIPELINE (REDESIGNED) -->
+    <section class="section pipeline-section">
+      <div class="section-label">Architecture</div>
+      <div class="section-title">Expected End-to-End Pipeline</div>
+
+      <div class="pipeline-track" style="display: flex; gap: 20px;">
+        <!-- Row 1: Stages 1–3 -->
+        <div class="pipeline-row-wrapper">
+          <div class="pipeline-row">
+            <div class="pipe-card">
+              <div class="pipe-card-header">
+                <div class="pipe-icon-wrap" style="background: rgba(45, 155, 111, 0.1);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pipe-stage-num">Stage 01</div>
+                  <div class="pipe-stage-title">Drone Capture</div>
+                </div>
+              </div>
+              <div class="pipe-card-body">
+                <strong>Input layer</strong> — Field or leaf images from drone/mobile with GPS metadata attached.
+              </div>
+            </div>
+
+            <div class="pipe-card">
+              <div class="pipe-card-header">
+                <div class="pipe-icon-wrap" style="background: rgba(45, 155, 111, 0.1);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                    <path d="M3 9h18"></path>
+                    <path d="M9 3v18"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pipe-stage-num">Stage 02</div>
+                  <div class="pipe-stage-title">Preprocessing</div>
+                </div>
+              </div>
+              <div class="pipe-card-body">
+                <strong>Transform</strong> — Resize, normalise, augment. Validate quality with blur detection checks.
+              </div>
+            </div>
+
+            <div class="pipe-card">
+              <div class="pipe-card-header">
+                <div class="pipe-icon-wrap" style="background: rgba(45, 155, 111, 0.1);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93"></path>
+                    <path d="M8.24 4.47A4 4 0 0 0 8 6c0 1.95 1.4 3.58 3.25 3.93"></path>
+                    <path d="M12 10v8"></path>
+                    <path d="M8 14h8"></path>
+                    <circle cx="12" cy="20" r="2"></circle>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pipe-stage-num">Stage 03</div>
+                  <div class="pipe-stage-title">CNN Model</div>
+                </div>
+              </div>
+              <div class="pipe-card-body">
+                <strong>Inference</strong> — EfficientNet / ResNet-based classification across disease classes.
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Row 2: Stages 4–6 -->
+        <div class="pipeline-row-wrapper">
+          <div class="pipeline-row">
+            <div class="pipe-card">
+              <div class="pipe-card-header">
+                <div class="pipe-icon-wrap" style="background: rgba(245, 166, 35, 0.1);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 20V10"></path>
+                    <path d="M12 20V4"></path>
+                    <path d="M6 20v-6"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pipe-stage-num">Stage 04</div>
+                  <div class="pipe-stage-title">Prediction</div>
+                </div>
+              </div>
+              <div class="pipe-card-body">
+                <strong>Output</strong> — Disease class, confidence score, and severity level for the detected condition.
+              </div>
+            </div>
+
+            <div class="pipe-card">
+              <div class="pipe-card-header">
+                <div class="pipe-icon-wrap" style="background: rgba(245, 166, 35, 0.1);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    <path d="M8 9h8"></path>
+                    <path d="M8 13h4"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pipe-stage-num">Stage 05</div>
+                  <div class="pipe-stage-title">LLM Module</div>
+                </div>
+              </div>
+              <div class="pipe-card-body">
+                <strong>Context layer</strong> — Recovery steps, treatment options, and geo-aware preventive guidance.
+              </div>
+            </div>
+
+            <div class="pipe-card">
+              <div class="pipe-card-header">
+                <div class="pipe-icon-wrap" style="background: rgba(245, 166, 35, 0.1);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                    <path d="M8 21h8"></path>
+                    <path d="M12 17v4"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pipe-stage-num">Stage 06</div>
+                  <div class="pipe-stage-title">Web App UI</div>
+                </div>
+              </div>
+              <div class="pipe-card-body">
+                <strong>Presentation</strong> — Local web interface for image upload, results, and recommendation display.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline note -->
+      <div class="pipeline-note">
+        <div class="pipeline-note-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--green-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 16v-4"></path>
+            <path d="M12 8h.01"></path>
+          </svg>
+        </div>
+        <p>All six stages must be <strong>functional and demonstrated live</strong> during judging. Partial pipelines will not be scored.</p>
+      </div>
+    </section>
+
+    <!-- REQUIREMENTS -->
+    <section class="section">
+      <div class="section-label">Technical Specification</div>
+      <div class="section-title">System Requirements</div>
+      <div class="req-grid">
+
+        <div class="req-card">
+          <div class="req-num">Module 01</div>
+          <h4>Image Processing Core</h4>
+          <ul>
+            <li><strong>Input:</strong> Drone-captured field or leaf images : </li>
+            <li>Since Drone is out of the Hackathon Scope , you can assume we are getting pictures from Drone with
+              Metadata</li>
+            <li><strong>Output:</strong> Disease class with confidence score</li>
+            <li><strong>Crops:</strong> Tomato, Apple, Grape</li>
+            <li><strong>Dataset:</strong> Multi-class, includes healthy leaves and class imbalance (real-world
+              simulation)</li>
+          </ul>
+        </div>
+
+        <div class="req-card">
+          <div class="req-num">Module 02</div>
+          <h4>AI Vision Model</h4>
+          <ul>
+            <li><strong>Architecture:</strong> CNN </li>
+            <li><strong>Transfer Learning:</strong> EfficientNet, ResNet or equivalent strongly recommended</li>
+            <li><strong>Primary Metric:</strong> F1 Score</li>
+            <li><strong>Also Required:</strong> Precision, Recall, Confusion Matrix (Good to have) </li>
+          </ul>
+        </div>
+
+        <div class="req-card">
+          <div class="req-num">Module 03</div>
+          <h4>Context-Aware LLM Layer</h4>
+          <ul>
+            <li><strong>Inputs to LLM:</strong> Crop type, Disease detected</li>
+            <li><strong>Outputs:</strong> Recovery steps, Treatment suggestions (organic &amp; chemical),
+              Time-to-recovery, Preventive measures</li>
+            <li><strong>Approaches:</strong> Prompt Engineering - Use Free LLM * See the Note section below</li>
+          </ul>
+        </div>
+
+        <div class="req-card">
+          <div class="req-num">Module 04 - Nice to have </div>
+          <h4>Input Validation &amp; Guardrails - Use your creativity and Innovation</h4>
+          <ul>
+            <li><strong>Blur Detection:</strong> Flag low-quality images before inference</li>
+            <li><strong>Confidence Threshold:</strong> Request re-capture if below 60%</li>
+            <li><strong>GPS Validation:</strong> Warn if image location doesn't match farm region</li>
+          </ul>
+        </div>
+
+        <div class="req-card full">
+          <div class="req-num">Module 05 — Mandatory</div>
+          <h4>Local Web Application (Minimum Viable Demo)</h4>
+          <ul>
+            <li><strong>Frontend:</strong> Image upload, crop selection, prediction display, LLM recommendation panel
+            </li>
+            <li><strong>Backend:</strong> Model inference API running locally — Flask, FastAPI, Express, or Streamlit
+            </li>
+            <li><strong>Allowed LLM options:</strong> API-based rule-based prompt simulation * See note</li>
+            <li><strong>No pure notebooks:</strong> Jupyter demos without a web UI will be disqualified</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- EVALUATION METRICS -->
+    <section class="section">
+      <div class="section-label">Evaluation</div>
+      <div class="section-title">Performance Metrics</div>
+      <div class="metric-row">
+        <div class="metric-chip">
+          <div class="metric-name">Primary</div>
+          <div class="metric-val">F1</div>
+        </div>
+        <div class="metric-chip">
+          <div class="metric-name">Precision</div>
+          <div class="metric-val">P</div>
+        </div>
+        <div class="metric-chip">
+          <div class="metric-name">Recall</div>
+          <div class="metric-val">R</div>
+        </div>
+        <div class="metric-chip">
+          <div class="metric-name">Analysis</div>
+          <div class="metric-val">CM</div>
+        </div>
+      </div>
+      <p style="font-size:13px; color:var(--muted);">F1 is calculated as Macro F1 across all disease classes. Teams
+        should be able to give Precision , Recall , F1 for multiple model check points and be prepared to explain
+        misclassification patterns during judging.</p>
+    </section>
+
+
+    <!-- VALIDATION -->
+    <section class="section">
+      <div class="section-label">Quality Assurance</div>
+      <div class="section-title">Input Validation Pipeline</div>
+      <p>A production-ready system rejects bad input before inference. Implement at least Layers 1–3:</p>
+      <div class="validation-layers" style="margin-top:16px;">
+        <div class="vlayer crit">
+          <div class="layer-label">Layer 1 · Critical</div>
+          <div class="layer-desc"><strong>Image Quality Check</strong> — Detect blur using Laplacian variance. Reject
+            images below threshold with "Image is unclear — please capture a closer leaf photo."</div>
+        </div>
+        <div class="vlayer high">
+          <div class="layer-label">Layer 2 · High</div>
+          <div class="layer-desc"><strong>Confidence Gate</strong> — If disease model confidence &lt; 60%, flag and
+            request re-upload rather than displaying an uncertain prediction as fact.</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+
+
+    <!-- SAMPLE OUTPUT -->
+    <section class="section">
+      <div class="section-label">Reference Output</div>
+      <div class="section-title"> Sample Expected System Output Format (This is just a reference)</div>
+      <div class="sample-output">
+        <div><span class="so-key">Crop:</span> <span class="so-val">Tomato</span></div>
+        <div><span class="so-key">Disease:</span> <span class="so-val">Tomato Yellow Leaf Curl Virus</span></div>
+        <div><span class="so-key">Confidence:</span> <span class="so-val">92%</span></div>
+        <div><span class="so-key">Severity:</span> <span class="so-val">Moderate</span></div>
+        <div><span class="so-key">Location:</span> <span class="so-val">Mangalore, Karnataka , India</span></div>
+        <div><span class="so-key">Time Context:</span><span class="so-val">Early Morning — ideal spraying window</span>
+        </div>
+        <div>&nbsp;</div>
+        <div><span class="so-head">── AI Recommendation ───────────────────────</span></div>
+        <div>&nbsp;</div>
+        <div><span class="so-item">1.</span> Remove infected plants immediately to prevent vector spread</div>
+        <div><span class="so-item">2.</span> Apply neem oil spray now (6–8 AM is optimal in Kerala humidity)</div>
+        <div><span class="so-item">3.</span> Deploy yellow sticky traps to control whitefly vectors</div>
+        <div><span class="so-item">4.</span> Avoid chemical spraying — rain forecast within 6 hours</div>
+        <div><span class="so-item">5.</span> Monitor adjacent sectors; high humidity accelerates spread</div>
+        <div>&nbsp;</div>
+        <div><span class="so-key">Est. Recovery:</span> <span class="so-val">14–21 days with immediate
+            intervention</span></div>
+        <div><span class="so-key">Preventive Note:</span> <span class="so-val">Pre-monsoon conditions in Kerala increase
+            fungal risk — inspect weekly</span></div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- DELIVERABLES -->
+    <section class="section">
+      <div class="section-label">Submission</div>
+      <div class="section-title">Required Deliverables</div>
+      <div class="deliverables-grid">
+        <div class="del-card">
+          <div class="del-title">Trained AI Model</div>
+          <div class="del-desc">Saved weights, architecture file, and inference script. Must load in under 30 seconds on
+            a standard laptop.</div>
+        </div>
+        <div class="del-card">
+          <div class="del-title">Source Code</div>
+          <div class="del-desc">Public GitHub repository with clear folder structure, README, and setup instructions
+            reproducible by judges.</div>
+        </div>
+        <div class="del-card">
+          <div class="del-title">Live Local Demo</div>
+          <div class="del-desc">Working web app on localhost — judges will upload unknown test images and verify real
+            inference is occurring.</div>
+        </div>
+        <div class="del-card">
+          <div class="del-title">Evaluation Report</div>
+          <div class="del-desc">Confusion matrix, Macro F1 score, precision and recall per class, and explanation of
+            imbalance strategy.</div>
+        </div>
+        <div class="del-card">
+          <div class="del-title">LLM Prompt Design</div>
+          <div class="del-desc">Written explanation of prompt engineering approach, context variables used, and sample
+            prompt-response pairs.</div>
+        </div>
+        <div class="del-card">
+          <div class="del-title">Presentation</div>
+          <div class="del-desc">10-minute pitch: Problem → Approach → Results → Innovation. Teams must answer judge
+            questions on architecture decisions.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DISQUALIFICATION -->
+    <section class="section">
+      <div class="section-label">Rules</div>
+      <div class="section-title">Disqualification Conditions</div>
+      <div class="dq-box">
+        <h4>Any of the following will result in immediate disqualification</h4>
+        <ul>
+          <li>No working web application running on localhost during demo</li>
+          <li>Model not integrated into the UI — standalone Jupyter notebooks are not accepted</li>
+          <li>Hardcoded or mocked prediction outputs that bypass real model inference</li>
+          <li>LLM recommendations that are pre-written strings not generated from disease input</li>
+          <li>External paid APIs used without prior written justification submitted to organisers</li>
+          <li>Plagiarised code or models presented as original work</li>
+          <li>Code sourced or commissioned from external individuals, freelancers, or online services and presented as the team's own work</li>
+        </ul>
+      </div>
+    </section>
+
+
+
+    <!-- JUDGE CHECKLIST -->
+    <section class="section">
+      <div class="section-title">Notes</div>
+      <div class="req-card">
+        <ul>
+          <li>1. You can use Google Colab or similar notebooks to train the model in GPUs</li>
+          <li> Once the training is done we need to download the models to run on local machine</li>
+          <li>2. You can use this Kaggle dataset for training the model</li>
+          <li>------------- https://www.kaggle.com/datasets/abdallahalidev/plantvillage-dataset</li>
+          <li> 3. There are no restriction on technology stack and web server . You can choose whichever is comfortable
+          </li>
+          <li> 4. For LLM integration you can use free LLM available for eg . https://console.groq.com/keys </li>
+        </ul>
+      </div>
+    </section>
+
+
+
+    <!-- PRO TIP -->
+    <section class="section">
+      <div class="problem-box" style="background:var(--green-mid);">
+        <h3>Pro Tip from the Organisers</h3>
+        <p style="font-size:15px; font-style:italic;">"A simple, working system with correct predictions and a clean web
+          interface beats a complex, incomplete system every time. Build something a farmer could actually use — that is
+          the standard you are judged against."</p>
+      </div>
+    </section>
+    <p style="margin-top:10px; color:#5c626d; font-size:16px; border-left:3px solid #2a7a4f; padding-left:10px;">
+      * For dataset access, starter resources, and queries — contact the organising committee
+    </p>
+  </main>
+
+  <footer class="footer">
+    <p><strong>Matrix Fusion 4.0 - AI Hackathon 2026</strong>
+    </p><p>Organised by Yenepoya Institute of Technology · Powered by Kokos.ai</p>
+  </footer>
+
+
+
+</body></html>

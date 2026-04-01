@@ -33,6 +33,17 @@ def _normalize_confidence_value(confidence: Any) -> Optional[float]:
     return None
 
 
+def _estimate_cost(organic_treatment: List[str], chemical_treatment: List[str]) -> str:
+    combined = " ".join(organic_treatment + chemical_treatment).lower()
+    if "neem" in combined:
+        return "Approx. ₹250/L"
+    if "copper" in combined:
+        return "Approx. ₹400/kg"
+    if combined:
+        return "Approx. ₹300/L"
+    return "Weather-dependent; consult local market"
+
+
 # ============================================================================
 # FALLBACK ADVISOR (NO LLM)
 # ============================================================================
@@ -67,6 +78,7 @@ def generate_fallback_advice(
         "crop": crop,
         "disease": disease,
         "summary": "",
+        "estimated_cost": "",
         "organic_treatment": [],
         "chemical_treatment": [],
         "recovery_time": "",
@@ -83,6 +95,7 @@ def generate_fallback_advice(
             "Specific guidance not available in local knowledge base. "
             "Recommend consulting regional agricultural extension office."
         )
+        advice["estimated_cost"] = "Weather-dependent; consult local market"
         advice["warnings"] = [
             "Unknown disease - recommendations are generic",
             "Contact local agricultural expert for specific guidance"
@@ -96,6 +109,7 @@ def generate_fallback_advice(
     advice["recovery_time"] = _format_recovery_time(kb_entry.get("recovery_time_days", 21))
     advice["preventive_measures"] = kb_entry.get("preventive_measures", [])[:config.MAX_RECOMMENDATIONS]
     advice["notes"] = kb_entry.get("notes", [])
+    advice["estimated_cost"] = _estimate_cost(advice["organic_treatment"], advice["chemical_treatment"])
     
     # Add severity-based warnings
     if severity.lower() in ["severe", "critical"]:
@@ -261,6 +275,7 @@ def _call_groq_api(
         advice.setdefault("preventive_measures", [])
         advice.setdefault("summary", "")
         advice.setdefault("recovery_time", "Unknown")
+        advice.setdefault("estimated_cost", _estimate_cost(advice["organic_treatment"], advice["chemical_treatment"]))
         
         return advice
     
@@ -314,6 +329,7 @@ def generate_advice(
             "crop": str(crop or "Unknown crop"),
             "disease": str(disease or "Unknown disease"),
             "summary": "An error occurred while generating recommendations. Please consult local agricultural experts.",
+            "estimated_cost": "Weather-dependent; consult local market",
             "organic_treatment": [],
             "chemical_treatment": [],
             "recovery_time": "Unknown",
@@ -353,6 +369,7 @@ def generate_advice(
             "crop": crop,
             "disease": disease,
             "summary": "An error occurred while generating recommendations. Please consult local agricultural experts.",
+            "estimated_cost": "Weather-dependent; consult local market",
             "organic_treatment": [],
             "chemical_treatment": [],
             "recovery_time": "Unknown",
@@ -428,7 +445,8 @@ def _validate_advice_output(advice: Dict[str, Any]) -> bool:
     required = [
         "source", "crop", "disease", "summary",
         "organic_treatment", "chemical_treatment",
-        "recovery_time", "preventive_measures"
+        "recovery_time", "preventive_measures",
+        "estimated_cost"
     ]
     
     missing = [f for f in required if f not in advice]

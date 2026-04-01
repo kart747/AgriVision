@@ -13,10 +13,21 @@ _SYSTEM_PROMPT = (
     "You are AgriVision AgroAdvisor for Indian crop-disease management. "
     "Respond with valid JSON only. Output keys must be exactly: "
     "immediate_action, local_treatment, weather_warning, "
-    "organic_treatment, chemical_treatment, recovery_time, preventive_measures. "
+    "organic_treatment, chemical_treatment, recovery_time, preventive_measures, estimated_cost. "
     "Guidance must be practical, safe, and location-aware. "
     "If model confidence is below 60 percent, emphasize verification before spray decisions."
 )
+
+
+def _estimate_cost_from_treatments(organic_treatment: List[str], chemical_treatment: List[str]) -> str:
+    combined = " ".join(organic_treatment + chemical_treatment).lower()
+    if "neem" in combined:
+        return "Approx. ₹250/L"
+    if "copper" in combined:
+        return "Approx. ₹400/kg"
+    if combined:
+        return "Approx. ₹300/L"
+    return "Weather-dependent; consult local market"
 
 
 def _kb_fallback_recommendation(crop: str, disease: str) -> Dict[str, Any]:
@@ -37,6 +48,7 @@ def _kb_fallback_recommendation(crop: str, disease: str) -> Dict[str, Any]:
             "immediate_action": "Isolate affected plants and remove heavily infected leaves today.",
             "local_treatment": "Consult your nearest agricultural extension office for crop-specific treatment advice.",
             "weather_warning": "Avoid spraying during rain or strong winds; prefer early morning applications.",
+            "estimated_cost": "Weather-dependent; consult local market",
             "organic_treatment": ["Isolate infected leaves and improve airflow around plants."],
             "chemical_treatment": ["Consult local extension office before selecting fungicide."],
             "recovery_time": "Unknown",
@@ -60,6 +72,7 @@ def _kb_fallback_recommendation(crop: str, disease: str) -> Dict[str, Any]:
             f"Recovery timeline: ~{recovery} days with proper treatment. "
             "Avoid spraying during rain and high wind."
         ),
+        "estimated_cost": _estimate_cost_from_treatments(organic, chemical),
         "organic_treatment": organic[:3],
         "chemical_treatment": chemical[:3],
         "recovery_time": f"~{recovery} days",
@@ -74,8 +87,10 @@ def _build_user_prompt(
     severity_score: int,
     location: str,
     month: str,
+    live_weather: Optional[str],
 ) -> str:
     confidence_gate = "LOW" if confidence < 60.0 else "PASS"
+    live_weather_value = live_weather or "Weather unavailable"
     return (
         "CASE INPUT:\n"
         f"- crop: {crop}\n"
@@ -84,6 +99,7 @@ def _build_user_prompt(
         f"- severity_score_0_to_100: {severity_score}\n"
         f"- location: {location}\n"
         f"- month: {month}\n"
+        f"- live_weather: {live_weather_value}\n"
         f"- confidence_gate_status: {confidence_gate} (threshold 60)\n\n"
         "TASK:\n"
         "1) immediate_action: first thing farmer should do in next 24 hours.\n"
@@ -92,11 +108,14 @@ def _build_user_prompt(
         "4) organic_treatment: list 2-4 organic options.\n"
         "5) chemical_treatment: list 1-3 chemical options.\n"
         "6) recovery_time: expected timeline.\n"
-        "7) preventive_measures: list 3-5 preventive steps.\n\n"
+        "7) preventive_measures: list 3-5 preventive steps.\n"
+        "8) estimated_cost: short string with approximate cost using the market prices context.\n\n"
         "RULES:\n"
         "- Use concise farmer-friendly language.\n"
         "- Do not mention that you are an AI model.\n"
         "- If confidence gate is LOW, ask for clearer image/re-validation before chemical spray.\n"
+        "- If live_weather shows strong wind or high heat, warn against spraying right now.\n"
+        "- Use this market pricing context for cost estimation: Neem-based spray (~₹250/L), Copper Fungicide (~₹400/kg), Generic Fungicide (~₹300/L).\n"
         "- Return JSON only with required keys."
     )
 
@@ -126,6 +145,7 @@ def _call_groq(client: Groq, user_prompt: str) -> Dict[str, Any]:
         "immediate_action": str(payload.get("immediate_action", "")).strip(),
         "local_treatment": str(payload.get("local_treatment", "")).strip(),
         "weather_warning": str(payload.get("weather_warning", "")).strip(),
+        "estimated_cost": str(payload.get("estimated_cost", "")).strip(),
         "organic_treatment": _as_list(payload.get("organic_treatment")),
         "chemical_treatment": _as_list(payload.get("chemical_treatment")),
         "recovery_time": str(payload.get("recovery_time", "")).strip(),
@@ -140,6 +160,7 @@ def get_recommendation(
     severity_score: int,
     location: str,
     month: str,
+    live_weather: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Get LLM recommendation with disease-specific knowledge-base fallback."""
     api_key = os.getenv("GROQ_API_KEY", "").strip()
@@ -148,7 +169,7 @@ def get_recommendation(
         return _kb_fallback_recommendation(crop, disease)
 
     client = Groq(api_key=api_key)
-    user_prompt = _build_user_prompt(crop, disease, confidence, severity_score, location, month)
+    user_prompt = _build_user_prompt(crop, disease, confidence, severity_score, location, month, live_weather)
 
     for attempt in range(2):
         try:

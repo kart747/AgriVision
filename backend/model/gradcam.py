@@ -6,9 +6,8 @@ from typing import Optional
 import cv2
 import numpy as np
 import torch
-from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam import EigenCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 
 def generate_gradcam_base64(
@@ -17,7 +16,7 @@ def generate_gradcam_base64(
     input_tensor: torch.Tensor,
     class_index: int,
 ) -> Optional[str]:
-    """Generate Grad-CAM overlay and return it as data URI base64 JPEG."""
+    """Generate EigenCAM overlay and return it as data URI base64 JPEG."""
     if model is None:
         return None
 
@@ -30,14 +29,12 @@ def generate_gradcam_base64(
         rgb = cv2.cvtColor(cv2.resize(bgr, (224, 224)), cv2.COLOR_BGR2RGB)
         rgb_float = rgb.astype(np.float32) / 255.0
 
-        target_layer = model.features[-1]
-        targets = [ClassifierOutputTarget(class_index)]
+        target_layer = model.features[7]
 
-        # Grad-CAM needs gradients enabled for the target layer.
-        with GradCAM(model=model, target_layers=[target_layer]) as cam:
-            grayscale_cam = cam(input_tensor=input_tensor, targets=targets)[0]
+        with EigenCAM(model=model, target_layers=[target_layer]) as cam:
+            grayscale_cam = cam(input_tensor=input_tensor)[0]
 
-        visualization = show_cam_on_image(rgb_float, grayscale_cam, use_rgb=True)
+        visualization = show_cam_on_image(rgb_float, grayscale_cam, use_rgb=True, image_weight=0.5)
         visualization = np.clip(visualization, 0, 255).astype(np.uint8)
         vis_bgr = cv2.cvtColor(visualization, cv2.COLOR_RGB2BGR)
 

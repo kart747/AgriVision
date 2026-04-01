@@ -97,6 +97,7 @@ class AdvisorOutput:
     crop: str  # Crop type
     disease: str  # Disease name
     summary: str  # Brief explanation of the disease
+    estimated_cost: str = ""  # Approximate treatment cost
     organic_treatment: List[str] = field(default_factory=list)  # Organic options
     chemical_treatment: List[str] = field(default_factory=list)  # Chemical options
     recovery_time: str = ""  # Estimated recovery time, e.g., "14-21 days"
@@ -111,6 +112,7 @@ class AdvisorOutput:
             "crop": self.crop,
             "disease": self.disease,
             "summary": self.summary,
+            "estimated_cost": self.estimated_cost,
             "organic_treatment": self.organic_treatment,
             "chemical_treatment": self.chemical_treatment,
             "recovery_time": self.recovery_time,

@@ -3,13 +3,17 @@ from __future__ import annotations
 from collections import Counter
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+import io
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import requests
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image
+from PIL.ExifTags import GPSTAGS, TAGS
 from pydantic import BaseModel, Field
 
 try:
@@ -39,6 +43,7 @@ class Recommendation(BaseModel):
     immediate_action: str
     local_treatment: str
     weather_warning: str
+    estimated_cost: str = ""
     organic_treatment: List[str] = Field(default_factory=list)
     chemical_treatment: List[str] = Field(default_factory=list)
     recovery_time: str = ""
@@ -55,6 +60,7 @@ class PredictSuccessResponse(BaseModel):
     blur_score: float
     cam_image: Optional[str]
     location: str
+    live_weather: str = "Weather unavailable"
     recommendation: Recommendation
     flagged: bool
     flag_reason: Optional[str]
@@ -90,6 +96,7 @@ class AdviceRequest(BaseModel):
     severity: Optional[str] = "Moderate"
     location: Optional[str] = "Mangalore, Karnataka, India"
     month: Optional[str] = None
+    live_weather: Optional[str] = None
     use_llm: Optional[bool] = False
 
 
@@ -99,6 +106,7 @@ class AdviceResponse(BaseModel):
     disease: str
     summary: str
     immediate_action: Optional[str] = None
+    estimated_cost: Optional[str] = None
     organic_treatment: Optional[List[str]] = None
     chemical_treatment: Optional[List[str]] = None
     recovery_time: Optional[str] = None
@@ -113,6 +121,91 @@ def _format_location(latitude: Optional[float], longitude: Optional[float]) -> s
     return f"{latitude:.4f}, {longitude:.4f}"
 
 
+def get_live_weather(lat: float, lon: float) -> str:
+    try:
+        url = (
+            "https://api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}&longitude={lon}&current_weather=true"
+        )
+        response = requests.get(url, timeout=2)
+        response.raise_for_status()
+        payload = response.json()
+        current_weather = payload.get("current_weather") or {}
+        temperature = current_weather.get("temperature")
+        windspeed = current_weather.get("windspeed")
+
+        if temperature is None or windspeed is None:
+            return "Weather unavailable"
+
+        temperature_value = int(round(float(temperature)))
+        windspeed_value = int(round(float(windspeed)))
+        return f"{temperature_value}°C, Wind: {windspeed_value} km/h"
+    except Exception:  # pylint: disable=broad-except
+        return "Weather unavailable"
+
+
+def _dms_part_to_float(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            numerator = float(value[0])
+            denominator = float(value[1])
+            if denominator == 0:
+                return None
+            return numerator / denominator
+        return float(value)
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+
+
+def _extract_gps_from_image_bytes(image_bytes: bytes) -> tuple[Optional[float], Optional[float]]:
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+        exif = image._getexif() or {}
+        if not exif:
+            return None, None
+
+        gps_info = None
+        for tag_id, value in exif.items():
+            if TAGS.get(tag_id, tag_id) == "GPSInfo":
+                gps_info = {GPSTAGS.get(k, k): v for k, v in value.items()}
+                break
+
+        if not gps_info:
+            return None, None
+
+        lat_dms = gps_info.get("GPSLatitude")
+        lon_dms = gps_info.get("GPSLongitude")
+        lat_ref = gps_info.get("GPSLatitudeRef")
+        lon_ref = gps_info.get("GPSLongitudeRef")
+        if not lat_dms or not lon_dms or not lat_ref or not lon_ref:
+            return None, None
+
+        lat_deg = _dms_part_to_float(lat_dms[0])
+        lat_min = _dms_part_to_float(lat_dms[1])
+        lat_sec = _dms_part_to_float(lat_dms[2])
+        lon_deg = _dms_part_to_float(lon_dms[0])
+        lon_min = _dms_part_to_float(lon_dms[1])
+        lon_sec = _dms_part_to_float(lon_dms[2])
+        if None in (lat_deg, lat_min, lat_sec, lon_deg, lon_min, lon_sec):
+            return None, None
+
+        latitude = lat_deg + (lat_min / 60.0) + (lat_sec / 3600.0)
+        longitude = lon_deg + (lon_min / 60.0) + (lon_sec / 3600.0)
+
+        lat_ref_text = str(lat_ref)
+        lon_ref_text = str(lon_ref)
+        if lat_ref_text in {"S", "b'S'"}:
+            latitude = -latitude
+        if lon_ref_text in {"W", "b'W'"}:
+            longitude = -longitude
+
+        return latitude, longitude
+    except Exception:  # pylint: disable=broad-except
+        return None, None
+
+
 def _build_predict_result(
     app: FastAPI,
     image_bytes: bytes,
@@ -123,6 +216,13 @@ def _build_predict_result(
     predictor: DiseasePredictor = app.state.model
     image_tensor, blur_score = preprocess_image(image_bytes)
     prediction = predictor.predict(image_tensor)
+
+    if latitude is None or longitude is None:
+        exif_latitude, exif_longitude = _extract_gps_from_image_bytes(image_bytes)
+        if latitude is None:
+            latitude = exif_latitude
+        if longitude is None:
+            longitude = exif_longitude
 
     if crop_hint and crop_hint.strip().lower() != str(prediction["crop_name"]).lower():
         raise HTTPException(
@@ -151,6 +251,11 @@ def _build_predict_result(
     location = _format_location(latitude, longitude)
     month = datetime.now().strftime("%B")
     llm_location = f"{location} ({gps_warning})" if gps_warning else location
+    live_weather = (
+        get_live_weather(latitude, longitude)
+        if latitude is not None and longitude is not None
+        else "Weather unavailable"
+    )
     recommendation = get_recommendation(
         crop=str(prediction["crop_name"]),
         disease=str(prediction["disease_name"]),
@@ -158,6 +263,7 @@ def _build_predict_result(
         severity_score=severity_score,
         location=llm_location,
         month=month,
+        live_weather=live_weather,
     )
 
     return {
@@ -170,10 +276,12 @@ def _build_predict_result(
         "blur_score": round(float(blur_score), 2),
         "cam_image": cam_image,
         "location": location,
+        "live_weather": live_weather,
         "recommendation": {
             "immediate_action": str(recommendation.get("immediate_action", "")),
             "local_treatment": str(recommendation.get("local_treatment", "")),
             "weather_warning": str(recommendation.get("weather_warning", "")),
+            "estimated_cost": str(recommendation.get("estimated_cost", "")),
             "organic_treatment": list(recommendation.get("organic_treatment", [])),
             "chemical_treatment": list(recommendation.get("chemical_treatment", [])),
             "recovery_time": str(recommendation.get("recovery_time", "")),
@@ -362,6 +470,7 @@ def generate_recommendation(request: AdviceRequest) -> AdviceResponse:
             "severity": request.severity,
             "location": request.location,
             "time_context": month,
+            "live_weather": request.live_weather,
         }
         advice = generate_advice(context, use_llm=bool(request.use_llm))
         return AdviceResponse(**advice)
