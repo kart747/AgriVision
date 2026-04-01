@@ -157,6 +157,13 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Commit: 33fcf21 (Integrate friend's frontend as primary page).
 - Push: main -> origin/main.
 
+- 2026-04-01: Integrated friend's trained model artifacts from non-main branch.
+- Source branch: origin/add-training-script.
+- Pulled files only (no branch merge): backend/model/weights/best_model.pth and backend/model/weights/class_names.json.
+- Detected class mapping count: 16 (Tomato/Apple/Grape subset classes).
+- Updated: backend/model/predict.py startup log to print "Friend's trained model loaded: X classes".
+- Validation: /health returned model_loaded=true and backend/test_api.py passed health/classes/drone-scan (predict blur gate rejection expected on unclear image).
+
 === SECTION 6: CURRENT STATUS ===
 - 100% Complete:
 - FastAPI backend endpoints and pipeline scaffolding.
@@ -171,7 +178,7 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Friend's richer frontend is now integrated as primary frontend page (frontend/index.html).
 
 - In Progress:
-- Final production-quality model performance for Tomato/Apple/Grape (current fallback checkpoint is compatibility-first, not high-accuracy disease-specific fine-tuned result).
+- Final production-quality model calibration/benchmarking for Tomato/Apple/Grape with friend's active checkpoint now integrated (16-class subset).
 - Stable curated demo test image set with disease-ground-truth certainty.
 
 - Blocked:
@@ -179,7 +186,7 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Availability of high-quality public HF/Kaggle checkpoints with directly compatible architecture metadata is inconsistent.
 
 - Next Steps:
-- Replace fallback checkpoint with Friend 1 fine-tuned model weights (18-class preferred).
+- Decide whether to expand friend's current 16-class subset to full planned 18-class crop scope.
 - Lock a local demo image pack committed under repo for deterministic testing.
 - Re-run backend/test_api.py with curated leaf images that pass blur gate.
 - Connect frontend/index.html interactions end-to-end with latest backend APIs if additional behavior changes are requested.
