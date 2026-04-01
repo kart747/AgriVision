@@ -10,3 +10,7 @@ grad-cam
 scikit-learn
 python-multipart
 python-dotenv
+huggingface-hub
+safetensors
+kagglehub
+requests

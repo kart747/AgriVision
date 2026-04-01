@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import torch
 from torchvision import models
@@ -11,18 +11,30 @@ SUPPORTED_CROPS = {"Tomato", "Apple", "Grape"}
 
 
 class DiseasePredictor:
-    def __init__(self, weights_path: Path, classes_path: Path, num_classes: int = 18) -> None:
+    def __init__(
+        self,
+        weights_path: Path,
+        classes_path: Path,
+        num_classes: Optional[int] = None,
+    ) -> None:
         self.weights_path = weights_path
         self.classes_path = classes_path
         self.num_classes = num_classes
+        self.detected_num_classes = 0
+        self.architecture = "efficientnet_b0"
         self.model: torch.nn.Module | None = None
         self.class_names: List[str] = []
+        self.supported_indices: List[int] = []
         self.model_loaded = False
 
     def load_resources(self) -> None:
         self.class_names = self._load_class_names()
+        self.detected_num_classes = len(self.class_names)
+        self._refresh_supported_indices()
         self.model = self._load_model()
         self.model_loaded = self.model is not None
+        if self.model_loaded:
+            print(f"[AgriVision] Model loaded: {self.detected_num_classes} classes detected")
 
     def _load_class_names(self) -> List[str]:
         if not self.classes_path.exists():
@@ -39,18 +51,52 @@ class DiseasePredictor:
         else:
             raise ValueError("class_names.json must be a list or index-keyed dict")
 
-        if len(names) != self.num_classes:
+        if self.num_classes is not None and len(names) != self.num_classes:
             print(
                 "[AgriVision] Warning: class_names count is "
                 f"{len(names)}, expected {self.num_classes}."
             )
         return names
 
-    def _build_model(self) -> torch.nn.Module:
-        model = models.efficientnet_b0(weights=None)
-        in_features = model.classifier[1].in_features
-        model.classifier[1] = torch.nn.Linear(in_features, self.num_classes)
-        return model
+    def _refresh_supported_indices(self) -> None:
+        self.supported_indices = []
+        for idx, name in enumerate(self.class_names):
+            parsed = self._parse_class_name(name)
+            if str(parsed["crop_name"]) in SUPPORTED_CROPS:
+                self.supported_indices.append(idx)
+
+    @staticmethod
+    def _strip_prefix_if_needed(state_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        if not state_dict:
+            return state_dict
+        if all(k.startswith("module.") for k in state_dict.keys()):
+            return {k.replace("module.", "", 1): v for k, v in state_dict.items()}
+        return state_dict
+
+    def _build_model(self, architecture: str, num_classes: int) -> torch.nn.Module:
+        arch = architecture.lower()
+        if arch in {"efficientnet_b0", "efficientnet-b0", "efficientnetb0"}:
+            model = models.efficientnet_b0(weights=None)
+            in_features = model.classifier[1].in_features
+            model.classifier[1] = torch.nn.Linear(in_features, num_classes)
+            self.architecture = "efficientnet_b0"
+            return model
+
+        if arch in {"mobilenet_v2", "mobilenetv2"}:
+            model = models.mobilenet_v2(weights=None)
+            in_features = model.classifier[1].in_features
+            model.classifier[1] = torch.nn.Linear(in_features, num_classes)
+            self.architecture = "mobilenet_v2"
+            return model
+
+        if arch in {"resnet50", "resnet_50"}:
+            model = models.resnet50(weights=None)
+            in_features = model.fc.in_features
+            model.fc = torch.nn.Linear(in_features, num_classes)
+            self.architecture = "resnet50"
+            return model
+
+        raise ValueError(f"Unsupported architecture metadata in checkpoint: {architecture}")
 
     def _load_model(self) -> torch.nn.Module | None:
         if not self.weights_path.exists():
@@ -60,9 +106,22 @@ class DiseasePredictor:
             )
             return None
 
-        model = self._build_model()
-        state_dict = torch.load(self.weights_path, map_location=torch.device("cpu"))
-        model.load_state_dict(state_dict)
+        payload = torch.load(self.weights_path, map_location=torch.device("cpu"))
+
+        if isinstance(payload, dict) and "state_dict" in payload:
+            state_dict = payload["state_dict"]
+            architecture = str(payload.get("architecture", "efficientnet_b0"))
+            ckpt_num_classes = int(payload.get("num_classes", self.detected_num_classes or 18))
+        else:
+            state_dict = payload
+            architecture = "efficientnet_b0"
+            ckpt_num_classes = self.detected_num_classes or 18
+
+        state_dict = self._strip_prefix_if_needed(state_dict)
+        target_num_classes = self.detected_num_classes or ckpt_num_classes
+
+        model = self._build_model(architecture=architecture, num_classes=target_num_classes)
+        model.load_state_dict(state_dict, strict=False)
         model.eval()
         return model
 
@@ -97,7 +156,17 @@ class DiseasePredictor:
         with torch.no_grad():
             logits = self.model(image_tensor)
             probs = torch.softmax(logits, dim=1)
-            confidence, pred_idx = torch.max(probs, dim=1)
+            if self.detected_num_classes == 38:
+                if not self.supported_indices:
+                    raise ValueError("No supported Tomato/Apple/Grape classes found in class_names.")
+                filtered_probs = probs[:, self.supported_indices]
+                confidence, filtered_idx = torch.max(filtered_probs, dim=1)
+                pred_idx = torch.tensor(
+                    [self.supported_indices[int(filtered_idx.item())]],
+                    dtype=torch.long,
+                )
+            else:
+                confidence, pred_idx = torch.max(probs, dim=1)
 
         confidence_pct = float(confidence.item() * 100.0)
         idx = int(pred_idx.item())

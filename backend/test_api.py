@@ -19,6 +19,9 @@ IMAGE_URL_CANDIDATES = [
 	"https://upload.wikimedia.org/wikipedia/commons/4/49/Tomato_leaf_%28Solanum_lycopersicum%29.jpg",
 	"https://images.unsplash.com/photo-1592928302575-2f0cf30cf479?auto=format&fit=crop&w=800&q=80",
 	"https://images.unsplash.com/photo-1582281298055-e25b84a30b0b?auto=format&fit=crop&w=800&q=80",
+	"https://picsum.photos/seed/agrivision-a/800/600",
+	"https://picsum.photos/seed/agrivision-b/800/600",
+	"https://picsum.photos/seed/agrivision-c/800/600",
 ]
 
 

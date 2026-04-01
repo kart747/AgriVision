@@ -145,7 +145,7 @@ async def lifespan(app: FastAPI):
     print(f"[AgriVision] Weights path: {weights_path}")
     print(f"[AgriVision] Classes path: {classes_path}")
 
-    predictor = DiseasePredictor(weights_path=weights_path, classes_path=classes_path, num_classes=18)
+    predictor = DiseasePredictor(weights_path=weights_path, classes_path=classes_path)
 
     try:
         predictor.load_resources()
