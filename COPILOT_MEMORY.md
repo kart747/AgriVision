@@ -64,6 +64,7 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - training/test_pretrained.py: Direct model inference test on 3 internet-downloaded crop samples (complete).
 - training/tmp_test_images/: Downloaded training-test images (generated artifact).
 - frontend/: Browser-openable frontend test tooling (complete for testing scope).
+- frontend/index.html: Friend's richer landing/dashboard frontend integrated as primary frontend entry (complete).
 - frontend/test_ui.html: Single-file manual API testing UI with predict/drone tabs and health indicator (complete).
 - COPILOT_MEMORY.md: This persistent project memory ledger (complete, must be updated on every change).
 - Completion Summary: Core backend pipeline is complete; model quality remains in-progress pending friend-trained crop-specific checkpoint delivery.
@@ -149,6 +150,12 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Commit: e514f0d (Add minimal frontend test UI and update project memory).
 - Push: main -> origin/main.
 
+- 2026-04-01: Integrated friend's frontend implementation into active project frontend.
+- Added: frontend/index.html from friend commit ff5e707 (agrigo.html source).
+- Kept: frontend/test_ui.html for API validation utility.
+- Updated: COPILOT_MEMORY.md to reflect frontend integration status.
+- Commit/Pushed: pending at time of this entry (updated immediately after push).
+
 === SECTION 6: CURRENT STATUS ===
 - 100% Complete:
 - FastAPI backend endpoints and pipeline scaffolding.
@@ -160,6 +167,7 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Automated pretrained download script and direct model test script.
 - GitHub integration and push workflow.
 - Minimal browser-based frontend test utility for /predict and /drone-scan.
+- Friend's richer frontend is now integrated as primary frontend page (frontend/index.html).
 
 - In Progress:
 - Final production-quality model performance for Tomato/Apple/Grape (current fallback checkpoint is compatibility-first, not high-accuracy disease-specific fine-tuned result).
@@ -173,7 +181,7 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Replace fallback checkpoint with Friend 1 fine-tuned model weights (18-class preferred).
 - Lock a local demo image pack committed under repo for deterministic testing.
 - Re-run backend/test_api.py with curated leaf images that pass blur gate.
-- Align Friend 3 final UI with the tested API behavior from frontend/test_ui.html.
+- Connect frontend/index.html interactions end-to-end with latest backend APIs if additional behavior changes are requested.
 
 === SECTION 7: KNOWN ISSUES ===
 - Issue: Internet image URLs used in test scripts are unstable (403/404/503).
