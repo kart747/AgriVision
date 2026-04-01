@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgriVision Test UI</title>
+  <style>
+    :root {
+      --bg: #1a1a1a;
+      --panel: #242424;
+      --text: #ffffff;
+      --muted: #bdbdbd;
+      --accent: #4caf50;
+      --danger: #e53935;
+      --warn: #fbc02d;
+      --info: #29b6f6;
+      --amber: #ffb300;
+      --border: #3a3a3a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 24px auto;
+      padding: 0 16px 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #202020;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--danger);
+    }
+
+    .dot.ok { background: var(--accent); }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: #222;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    label { display: block; margin-bottom: 8px; color: var(--muted); }
+    input[type="text"], input[type="number"], input[type="file"] {
+      width: 100%;
+      background: #121212;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    button {
+      background: var(--accent);
+      color: #111;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .preview {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: #101010;
+    }
+
+    .hidden { display: none; }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 3px solid #2a2a2a;
+      border-top: 3px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .banner {
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border: 1px solid;
+      font-size: 14px;
+    }
+
+    .banner.red { background: #3a1616; border-color: #6a1b1b; }
+    .banner.yellow { background: #3a3416; border-color: #7f6a1b; }
+    .banner.amber { background: #3a2b16; border-color: #8a5a1f; }
+    .banner.info { background: #14303b; border-color: #1f6075; }
+
+    .result-title {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 4px 0 10px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0 12px;
+    }
+
+    .chip {
+      background: #111;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .bar-wrap {
+      background: #101010;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      height: 16px;
+      margin: 8px 0;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0;
+      background: var(--danger);
+      transition: width 0.3s ease;
+    }
+
+    .heatmap {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0f0f0f;
+    }
+
+    .recommendation p {
+      margin: 6px 0;
+      line-height: 1.45;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { background: #151515; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>AgriVision Test Frontend</h1>
+      <div id="healthStatus" class="status"><span id="healthDot" class="dot"></span><span id="healthText">Checking API...</span></div>
+    </div>
+
+    <div class="tabs">
+      <button id="tabPredict" class="tab-btn active" type="button">Predict</button>
+      <button id="tabDrone" class="tab-btn" type="button">Drone Scan</button>
+    </div>
+
+    <section id="predictSection">
+      <div class="panel grid">
+        <div>
+          <label for="imageInput">Leaf image</label>
+          <input id="imageInput" type="file" accept="image/*">
+
+          <div style="height: 10px"></div>
+          <label for="latInput">Latitude (optional)</label>
+          <input id="latInput" type="text" placeholder="e.g. 12.9716">
+
+          <div style="height: 10px"></div>
+          <label for="lngInput">Longitude (optional)</label>
+          <input id="lngInput" type="text" placeholder="e.g. 77.5946">
+
+          <div style="height: 14px"></div>
+          <button id="predictBtn" type="button">Submit /predict</button>
+          <span id="predictSpinner" class="spinner hidden"></span>
+        </div>
+        <div>
+          <label>Preview</label>
+          <img id="previewImage" class="preview" alt="Preview">
+        </div>
+      </div>
+
+      <div id="predictMessage"></div>
+
+      <div id="predictResult" class="panel hidden">
+        <div id="titleText" class="result-title"></div>
+
+        <div>
+          <div>Confidence: <strong id="confidenceText">0%</strong></div>
+          <div class="bar-wrap"><div id="confidenceBar" class="bar"></div></div>
+        </div>
+
+        <div class="chips">
+          <div class="chip">Severity Label: <span id="severityLabel"></span></div>
+          <div class="chip">Severity Score: <span id="severityScore"></span></div>
+          <div class="chip">Blur Score: <span id="blurScore"></span></div>
+        </div>
+
+        <h3>Grad-CAM Heatmap</h3>
+        <img id="camImage" class="heatmap" alt="Grad-CAM Heatmap">
+        <p id="camMissing" class="hidden" style="color: var(--muted);">No heatmap returned.</p>
+
+        <h3>LLM Recommendation</h3>
+        <div class="recommendation">
+          <p><strong>Immediate Action:</strong> <span id="immediateAction"></span></p>
+          <p><strong>Local Treatment:</strong> <span id="localTreatment"></span></p>
+          <p><strong>Weather Warning:</strong> <span id="weatherWarning"></span></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="droneSection" class="hidden">
+      <div class="panel">
+        <label for="droneInput">Select multiple leaf images</label>
+        <input id="droneInput" type="file" accept="image/*" multiple>
+        <div style="height: 14px"></div>
+        <button id="droneBtn" type="button">Submit /drone-scan</button>
+        <span id="droneSpinner" class="spinner hidden"></span>
+      </div>
+
+      <div id="droneMessage"></div>
+
+      <div id="droneResult" class="panel hidden">
+        <div class="chips">
+          <div class="chip">Total Leaves: <span id="dTotal"></span></div>
+          <div class="chip">Infection Rate %: <span id="dRate"></span></div>
+          <div class="chip">Primary Threat: <span id="dThreat"></span></div>
+          <div class="chip">Average Confidence: <span id="dAvg"></span></div>
+          <div class="chip">Healthy: <span id="dHealthy"></span></div>
+          <div class="chip">Infected: <span id="dInfected"></span></div>
+        </div>
+
+        <h3>Per-leaf Results</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Leaf</th>
+              <th>Status</th>
+              <th>Crop</th>
+              <th>Disease</th>
+              <th>Confidence</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody id="droneTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:8000";
+
+    const el = (id) => document.getElementById(id);
+
+    function setBanner(containerId, type, message) {
+      el(containerId).innerHTML = `<div class="banner ${type}">${message}</div>`;
+    }
+
+    function clearBanner(containerId) {
+      el(containerId).innerHTML = "";
+    }
+
+    function setLoading(spinnerId, buttonId, on) {
+      el(spinnerId).classList.toggle("hidden", !on);
+      el(buttonId).disabled = on;
+    }
+
+    function setConfidenceBar(conf) {
+      const bar = el("confidenceBar");
+      const c = Number(conf || 0);
+      bar.style.width = `${Math.max(0, Math.min(100, c))}%`;
+      if (c > 85) {
+        bar.style.background = "#4caf50";
+      } else if (c >= 60) {
+        bar.style.background = "#fbc02d";
+      } else {
+        bar.style.background = "#e53935";
+      }
+    }
+
+    function classifyError(detail) {
+      const msg = String(detail || "").toLowerCase();
+      if (msg.includes("unclear") || msg.includes("blur")) {
+        return { type: "amber", label: "Blurry image detected. Please upload a clearer close-up leaf photo." };
+      }
+      if (msg.includes("confidence") || msg.includes("low confidence")) {
+        return { type: "yellow", label: "Low confidence prediction. Retake photo under better lighting and focus." };
+      }
+      if (msg.includes("unsupported crop") || msg.includes("crop hint mismatch") || msg.includes("crop")) {
+        return { type: "info", label: "Possible wrong crop or mismatch. This backend supports Tomato, Apple, and Grape." };
+      }
+      return { type: "red", label: `Request failed: ${detail}` };
+    }
+
+    async function healthCheck() {
+      try {
+        const res = await fetch(`${API_BASE}/health`);
+        if (!res.ok) throw new Error("health non-200");
+        const data = await res.json();
+        el("healthDot").classList.add("ok");
+        el("healthText").textContent = data.model_loaded ? "API Ready" : "API Online (model not loaded)";
+      } catch (e) {
+        el("healthDot").classList.remove("ok");
+        el("healthText").textContent = "API Offline";
+      }
+    }
+
+    function switchTab(tab) {
+      const isPredict = tab === "predict";
+      el("tabPredict").classList.toggle("active", isPredict);
+      el("tabDrone").classList.toggle("active", !isPredict);
+      el("predictSection").classList.toggle("hidden", !isPredict);
+      el("droneSection").classList.toggle("hidden", isPredict);
+    }
+
+    el("tabPredict").addEventListener("click", () => switchTab("predict"));
+    el("tabDrone").addEventListener("click", () => switchTab("drone"));
+
+    el("imageInput").addEventListener("change", (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      el("previewImage").src = url;
+    });
+
+    el("predictBtn").addEventListener("click", async () => {
+      clearBanner("predictMessage");
+      el("predictResult").classList.add("hidden");
+
+      const file = el("imageInput").files && el("imageInput").files[0];
+      if (!file) {
+        setBanner("predictMessage", "info", "Please select an image first.");
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append("image", file);
+
+      const lat = el("latInput").value.trim();
+      const lng = el("lngInput").value.trim();
+      if (lat) fd.append("latitude", lat);
+      if (lng) fd.append("longitude", lng);
+
+      setLoading("predictSpinner", "predictBtn", true);
+
+      try {
+        const res = await fetch(`${API_BASE}/predict`, { method: "POST", body: fd });
+        const data = await res.json();
+
+        if (!res.ok) {
+          const detail = data.detail || "Unknown API error";
+          const e = classifyError(detail);
+          setBanner("predictMessage", e.type, e.label);
+          return;
+        }
+
+        el("titleText").textContent = `${data.crop} - ${data.disease}`;
+        el("confidenceText").textContent = `${Number(data.confidence).toFixed(2)}%`;
+        setConfidenceBar(data.confidence);
+
+        el("severityLabel").textContent = data.severity_label;
+        el("severityScore").textContent = data.severity_score;
+        el("blurScore").textContent = data.blur_score;
+
+        if (data.cam_image) {
+          el("camImage").src = data.cam_image;
+          el("camImage").classList.remove("hidden");
+          el("camMissing").classList.add("hidden");
+        } else {
+          el("camImage").classList.add("hidden");
+          el("camMissing").classList.remove("hidden");
+        }
+
+        const rec = data.recommendation || {};
+        el("immediateAction").textContent = rec.immediate_action || "-";
+        el("localTreatment").textContent = rec.local_treatment || "-";
+        el("weatherWarning").textContent = rec.weather_warning || "-";
+
+        el("predictResult").classList.remove("hidden");
+      } catch (err) {
+        setBanner("predictMessage", "red", "API down or network error. Ensure backend is running at http://localhost:8000.");
+      } finally {
+        setLoading("predictSpinner", "predictBtn", false);
+      }
+    });
+
+    el("droneBtn").addEventListener("click", async () => {
+      clearBanner("droneMessage");
+      el("droneResult").classList.add("hidden");
+      el("droneTableBody").innerHTML = "";
+
+      const files = el("droneInput").files;
+      if (!files || !files.length) {
+        setBanner("droneMessage", "info", "Please choose one or more images.");
+        return;
+      }
+
+      const fd = new FormData();
+      Array.from(files).forEach((f) => fd.append("images", f));
+
+      setLoading("droneSpinner", "droneBtn", true);
+
+      try {
+        const res = await fetch(`${API_BASE}/drone-scan`, { method: "POST", body: fd });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setBanner("droneMessage", "red", `Drone scan failed: ${data.detail || "Unknown error"}`);
+          return;
+        }
+
+        el("dTotal").textContent = data.total_leaves_scanned;
+        el("dRate").textContent = data.infection_rate_percentage;
+        el("dThreat").textContent = data.primary_threat;
+        el("dAvg").textContent = data.average_confidence;
+        el("dHealthy").textContent = data.healthy_count;
+        el("dInfected").textContent = data.infected_count;
+
+        const rows = (data.per_leaf_results || []).map((item, idx) => {
+          const status = item.status || "success";
+          return `<tr>
+            <td>${item.leaf_index ?? (idx + 1)}</td>
+            <td>${status}</td>
+            <td>${item.crop || "-"}</td>
+            <td>${item.disease || "-"}</td>
+            <td>${item.confidence ?? "-"}</td>
+            <td>${item.detail || ""}</td>
+          </tr>`;
+        }).join("");
+
+        el("droneTableBody").innerHTML = rows || "<tr><td colspan='6'>No rows.</td></tr>";
+        el("droneResult").classList.remove("hidden");
+      } catch (err) {
+        setBanner("droneMessage", "red", "API down or network error. Ensure backend is running at http://localhost:8000.");
+      } finally {
+        setLoading("droneSpinner", "droneBtn", false);
+      }
+    });
+
+    healthCheck();
+  </script>
+</body>
+</html>
