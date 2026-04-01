@@ -132,7 +132,7 @@ def _build_predict_result(
     if prediction["flagged"]:
         raise HTTPException(
             status_code=422,
-            detail="Prediction confidence below 75%. Please capture a clearer leaf image.",
+            detail="Prediction confidence below 60%. Please capture a clearer leaf image.",
         )
 
     severity_score = calculate_severity_score(image_bytes)

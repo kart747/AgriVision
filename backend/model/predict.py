@@ -190,7 +190,7 @@ class DiseasePredictor:
             )
 
         severity_label = self._severity_from_confidence(confidence_pct)
-        flagged = confidence_pct < 75.0
+        flagged = confidence_pct < 60.0
         return {
             "class_index": idx,
             "confidence": round(confidence_pct, 2),
@@ -199,5 +199,5 @@ class DiseasePredictor:
             "disease_name": parsed["disease_name"],
             "is_healthy": bool(parsed["is_healthy"]),
             "flagged": flagged,
-            "flag_reason": "Low confidence (<75%)." if flagged else None,
+            "flag_reason": "Low confidence (<60%)." if flagged else None,
         }
