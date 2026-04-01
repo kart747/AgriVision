@@ -1099,7 +1099,7 @@
                 const chemicalTreatments = Array.isArray(advice.chemical_treatment) ? advice.chemical_treatment : [];
                 const warnings = Array.isArray(advice.warnings) ? advice.warnings : [];
 
-                const immediateAction = (advice.immediate_action || '').trim();
+                const immediateAction = (advice.immediate_action || data?.recommendation?.immediate_action || '').trim();
                 const localTreatment = (advice.local_treatment || chemicalTreatments[0] || organicTreatments[0] || '').trim();
                 const weatherWarning = (advice.weather_warning || warnings[0] || '').trim();
                 const estimatedCost = (advice.estimated_cost || '').trim();

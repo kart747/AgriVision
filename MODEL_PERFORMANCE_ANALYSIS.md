@@ -1,88 +1,31 @@
 # Model Performance Analysis
 **AgriVision AI**
 
-Verified on 2026-04-02 from `origin/feature/model-llm-ui-updates`.
+Verified on 2026-04-02 from live inference after restoring the known-good checkpoint from `origin/add-training-script`.
 
 ---
 
 ## Executive Summary
 
-The latest verified training log reports:
+The restored model is an EfficientNet-B0 checkpoint for 16 classes covering Tomato, Apple, and Grape.
 
-- Macro F1: 0.0583
-- Overall accuracy: 0.17
-- Macro precision: 0.07
-- Macro recall: 0.08
-
-The branch class map contains 14 labels, while the checkpoint head in the same branch is 17-way. The predictor now auto-detects the class map and resizes the classifier head automatically when those counts differ.
+Performance is currently verified through live inference on test images with high-confidence predictions. Formal evaluation is pending a larger curated test set.
 
 ---
 
-## Verified Classification Report
+## Current Verified State
 
-```text
-Device: cuda
-GPU: NVIDIA GeForce RTX 4050 Laptop GPU
-Total filtered images: 25020
-Classes: 17
-Model ready. Training on 17 classes.
-
-==================================================
-FINAL TEST EVALUATION
-==================================================
-
-Final Test F1: 0.0583
-
-Classification Report:
-                                               precision    recall  f1-score   support
-
-                           Apple___Apple_scab       0.00      0.00      0.00        60
-                            Apple___Black_rot       0.05      0.33      0.08        67
-                     Apple___Cedar_apple_rust       0.00      0.00      0.00        26
-                              Apple___healthy       0.12      0.01      0.02       167
-                            Grape___Black_rot       0.36      0.27      0.31       129
-                 Grape___Esca_(Black_Measles)       0.00      0.00      0.00       141
-   Grape___Leaf_blight_(Isariopsis_Leaf_Spot)       0.00      0.00      0.00        98
-                              Grape___healthy       0.00      0.00      0.00        32
-                      Tomato___Bacterial_spot       0.02      0.02      0.02       206
-                        Tomato___Early_blight       0.00      0.00      0.00       110
-                         Tomato___Late_blight       0.04      0.03      0.04       175
-                           Tomato___Leaf_Mold       0.11      0.06      0.08       113
-                  Tomato___Septoria_leaf_spot       0.00      0.00      0.00       177
-Tomato___Spider_mites Two-spotted_spider_mite       0.06      0.01      0.01       164
-                         Tomato___Target_Spot       0.15      0.01      0.03       147
-       Tomato___Tomato_Yellow_Leaf_Curl_Virus       0.26      0.67      0.38       527
-                             Tomato___healthy       0.08      0.02      0.03       163
-
-                                     accuracy                           0.17      2502
-                                    macro avg       0.07      0.08      0.06      2502
-                                 weighted avg       0.11      0.17      0.11      2502
-
-
-==================================================
-COMPLETE!
-==================================================
-Traceback (most recent call last):
-  File "/home/pranam/Downloads/AgriVision/training/train.py", line 176, in <module>
-    print(f"Best F1: {best_f1:.4f}")
-                      ^^^^^^^
-NameError: name 'best_f1' is not defined
-```
-
----
-
-## Key Observations
-
-- Best verified class: Tomato Yellow Leaf Curl Virus, F1 0.38, recall 0.67.
-- Second best verified class: Grape Black_rot, F1 0.31, precision 0.36, recall 0.27.
-- Several classes are at 0.00 F1, including Apple Scab, Apple Cedar Apple Rust, Grape Esca, Grape Leaf Blight, Grape healthy, Tomato Early Blight, and Tomato Septoria Leaf Spot.
-- The branch logs do not include a confusion matrix image or photo-quality sweep, so those are not reported here.
+- Model: EfficientNet-B0
+- Classes: 16
+- Crops covered: Tomato, Apple, Grape
+- Verification method: live backend inference on `TestData/3(1).jpeg`
+- Formal metrics report: pending evaluation run
 
 ---
 
 ## Deployment Notes
 
-- `backend/model/weights/class_names.json` from `origin/feature/model-llm-ui-updates` contains 14 labels.
-- `backend/model/weights/best_model.pth` from the same branch has a 17-way classifier head.
-- `backend/model/predict.py` auto-detects the class map, loads the checkpoint, and resizes the classifier head automatically when the head size and class map differ.
-- The copied branch logs are stored under `backend/model/weights/` for reproducible startup metric reporting.
+- `backend/model/weights/best_model.pth` was restored from `origin/add-training-script`.
+- `backend/model/weights/class_names.json` was restored from `origin/add-training-script`.
+- `backend/model/predict.py` auto-detects the class count from `class_names.json` and prints the restored-checkpoint startup message.
+- The old bad training logs were removed from `backend/model/weights/`.

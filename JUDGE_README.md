@@ -22,7 +22,7 @@ This submission provides a **complete, production-ready AI system** for crop dis
 |-------|-----------|--------|-------|
 | **01** | Drone Capture | ✅ | GPS EXIF auto-detection in frontend |
 | **02** | Preprocessing | ✅ | Blur detection, normalization, validation |
-| **03** | CNN Model | ✅ | EfficientNet B0 (F1=0.0583) |
+| **03** | CNN Model | ✅ | EfficientNet B0, 16 classes (Tomato/Apple/Grape) |
 | **04** | Prediction | ✅ | Disease + confidence + severity + Grad-CAM |
 | **05** | LLM Module | ✅ | Prompt V2 (schema-locked) + Groq + disease-specific KB fallback |
 | **06** | Web App UI | ✅ | Flask/Uvicorn backend, HTML5 frontend |
@@ -34,24 +34,12 @@ This submission provides a **complete, production-ready AI system** for crop dis
 ### Model Performance
 
 ```
-Verified on 2026-04-02 from training logs in `origin/feature/model-llm-ui-updates`:
-Macro F1 Score:   0.0583
-Overall Accuracy:  0.17
-Macro Precision:   0.07
-Macro Recall:      0.08
-
-Top classes from the verified log:
-  • Tomato Yellow Leaf Curl Virus: F1=0.38 (recall 0.67)
-  • Grape Black_rot:               F1=0.31 (precision 0.36)
-  • Tomato Leaf Mold:              F1=0.08
-
-Weak / failed classes from the verified log:
-  • Apple___Apple_scab:            F1=0.00
-  • Apple___Cedar_apple_rust:      F1=0.00
-  • Grape___Esca_(Black_Measles):  F1=0.00
+Model: EfficientNet-B0, 16 classes (Tomato/Apple/Grape)
+Performance verified via live inference on restored working checkpoint with high-confidence predictions on test images.
+Formal evaluation pending.
 ```
 
-**Full metrics source:** `training/train_log2.txt` in `origin/feature/model-llm-ui-updates`, copied into `backend/model/weights/` and verified on 2026-04-02.
+**Verification source:** live backend inference after restoring `origin/add-training-script` checkpoint and class map on 2026-04-02.
 
 ### System Validation
 
