@@ -671,7 +671,8 @@
                     console.log('No EXIF GPS data found or unable to parse');
                 }
             };
-            exifReader.readAsArrayBuffer(file);
+            // piexif.load expects a JPEG data URL string in browser usage.
+            exifReader.readAsDataURL(file);
             
             // Preview image
             const dataReader = new FileReader();
@@ -685,12 +686,23 @@
         }
         
         function convertDMSToDecimal(dms, ref) {
-            const degrees = dms[0][0] / dms[0][1];
-            const minutes = dms[1][0] / dms[1][1] / 60;
-            const seconds = dms[2][0] / dms[2][1] / 3600;
-            
+            const toNumber = (part) => {
+                if (Array.isArray(part) && part.length === 2) {
+                    return Number(part[0]) / Number(part[1]);
+                }
+                if (part && typeof part === 'object' && 'numerator' in part && 'denominator' in part) {
+                    return Number(part.numerator) / Number(part.denominator);
+                }
+                return Number(part);
+            };
+
+            const degrees = toNumber(dms[0]);
+            const minutes = toNumber(dms[1]) / 60;
+            const seconds = toNumber(dms[2]) / 3600;
+
             let result = degrees + minutes + seconds;
-            if (ref === 'S' || ref === 'W') {
+            const refText = Array.isArray(ref) ? String.fromCharCode(...ref) : String(ref || '');
+            if (refText === 'S' || refText === 'W') {
                 result = -result;
             }
             return result;
@@ -873,6 +885,36 @@
             const confidence = Math.round(Number(data.confidence || 0));
             const severity = data.severity_label || 'Unknown';
             const severityScore = Math.round(data.severity_score || 0);
+
+            // Sync detected coordinates back to input fields when backend returns numeric location.
+            if (typeof data.location === 'string') {
+                const locationMatch = data.location.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+                if (locationMatch) {
+                    const parsedLat = Number(locationMatch[1]);
+                    const parsedLng = Number(locationMatch[2]);
+                    if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) {
+                        document.getElementById('latitude').value = parsedLat.toFixed(6);
+                        document.getElementById('longitude').value = parsedLng.toFixed(6);
+                    }
+                }
+            }
+            const urgencyBadge = severityScore > 85
+                ? {
+                    text: '🚨 CRITICAL: ACT TODAY',
+                    bg: '#ff4d4d',
+                    fg: '#ffffff'
+                }
+                : (severityScore >= 60
+                    ? {
+                        text: '⚠️ WARNING: MONITOR CLOSELY',
+                        bg: '#f59e0b',
+                        fg: '#111111'
+                    }
+                    : {
+                        text: '✅ LOW RISK',
+                        bg: '#16a34a',
+                        fg: '#ffffff'
+                    });
             
             // Determine health status based on severity_score
             const isHealthy = severityScore < 20 && confidence > 75;
@@ -907,6 +949,7 @@
                             <div><strong>Immediate Action:</strong> ${data.recommendation.immediate_action || 'None'}</div>
                             <div style="margin-top: 6px;"><strong>Local Treatment:</strong> ${data.recommendation.local_treatment || 'None'}</div>
                             <div style="margin-top: 6px;"><strong>Weather Advisory:</strong> ${data.recommendation.weather_warning || 'None'}</div>
+                            <div style="margin-top: 6px;"><strong>Estimated Cost:</strong> ${data.recommendation.estimated_cost || 'Not available'}</div>
                             <div style="margin-top: 8px;"><strong>Organic Treatment Options:</strong>${toBulletList(organic)}</div>
                             <div style="margin-top: 8px;"><strong>Chemical Treatment Options:</strong>${toBulletList(chemical)}</div>
                             <div style="margin-top: 8px;"><strong>Time to Recovery:</strong> ${data.recommendation.recovery_time || 'Unknown'}</div>
@@ -933,15 +976,29 @@
                         </div>
                         <span class="status-badge ${statusBadgeClass}">${statusText}</span>
                     </div>
+
+                    <div style="margin: 10px 0 12px; padding: 10px 12px; border-radius: 6px; background: ${urgencyBadge.bg}; color: ${urgencyBadge.fg}; font-weight: 800; letter-spacing: 0.02em; font-size: 13px; text-align: center;">
+                        ${urgencyBadge.text}
+                    </div>
                     
                     <div class="result-row">
                         <span class="result-label">Crop:</span>
-                        <span class="result-value">${data.crop}</span>
+                        <span class="result-value" id="result-crop-${id}">${data.crop}</span>
+                    </div>
+
+                    <div class="result-row">
+                        <span class="result-label">Location:</span>
+                        <span class="result-value location-value" id="result-location-${id}">${data.location || 'Unknown'}</span>
+                    </div>
+
+                    <div class="result-row">
+                        <span class="result-label">Live Weather:</span>
+                        <span class="result-value" id="result-weather-${id}">🌤️ ${data.live_weather || 'Weather unavailable'}</span>
                     </div>
                     
                     <div class="result-row">
                         <span class="result-label">Severity:</span>
-                        <span class="result-value">${severity}</span>
+                        <span class="result-value" id="result-severity-${id}">${severity}</span>
                     </div>
                     
                     <div class="result-row">
@@ -961,6 +1018,9 @@
                         <div class="gradcam-label">Grad-CAM Heatmap</div>
                         ${data.cam_image ? `
                             <img class="gradcam-image" src="${data.cam_image}" alt="Grad-CAM heatmap for ${data.disease || 'prediction'}">
+                            <div style="margin-top: 6px; font-size: 11px; font-style: italic; color: var(--mist); opacity: 0.85;">
+                                AI attention heatmap isolates symptomatic tissue patterns for verification.
+                            </div>
                         ` : `
                             <div class="gradcam-empty">Grad-CAM image not available for this result.</div>
                         `}
@@ -972,6 +1032,12 @@
 
                     <div class="result-recommendation" id="grok-summary-${id}" style="margin-top:10px;">
                         <div style="opacity:0.85; font-size:11px;">Loading Groq summary...</div>
+                    </div>
+
+                    <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="shareReport(${id})" style="background: #25D366; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                            💬 Share Field Report to WhatsApp
+                        </button>
                     </div>
                 </div>
             `;
@@ -1010,6 +1076,7 @@
                     confidence: Number(data.confidence || 0) / 100,
                     severity: data.severity_label || 'Moderate',
                     location: data.location || 'Mangalore, Karnataka, India',
+                    live_weather: data.live_weather || 'Weather unavailable',
                     use_llm: true
                 };
 
@@ -1028,15 +1095,69 @@
                 const advice = await response.json();
                 const summary = advice.summary || 'No summary returned.';
                 const source = advice.source || 'unknown';
+                const organicTreatments = Array.isArray(advice.organic_treatment) ? advice.organic_treatment : [];
+                const chemicalTreatments = Array.isArray(advice.chemical_treatment) ? advice.chemical_treatment : [];
+                const warnings = Array.isArray(advice.warnings) ? advice.warnings : [];
+
+                const immediateAction = (advice.immediate_action || '').trim();
+                const localTreatment = (advice.local_treatment || chemicalTreatments[0] || organicTreatments[0] || '').trim();
+                const weatherWarning = (advice.weather_warning || warnings[0] || '').trim();
+                const estimatedCost = (advice.estimated_cost || '').trim();
+                const recoveryTime = (advice.recovery_time || '').trim();
+
+                const optionalRow = (label, value, idSuffix = '') => {
+                    if (!value) return '';
+                    const valueHtml = idSuffix
+                        ? `<span id="${idSuffix}">${value}</span>`
+                        : `${value}`;
+                    return `<div style="margin-top: 6px;"><strong>${label}:</strong> ${valueHtml}</div>`;
+                };
+
                 container.innerHTML = `
-                    <div style="background: rgba(163, 230, 53, 0.08); border: 1px solid rgba(163, 230, 53, 0.25); padding: 12px; font-size: 12px; line-height: 1.6;">
+                    <div id="llm-summary-text-${id}" style="background: rgba(163, 230, 53, 0.08); border: 1px solid rgba(163, 230, 53, 0.25); padding: 12px; font-size: 12px; line-height: 1.6;">
                         <div style="font-size: 11px; color: var(--spore); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Groq Summary (${source})</div>
                         <div>${summary}</div>
+                        ${optionalRow('Immediate Action', immediateAction, `llm-immediate-action-${id}`)}
+                        ${optionalRow('Local Treatment', localTreatment)}
+                        ${optionalRow('Weather Advisory', weatherWarning)}
+                        ${optionalRow('Estimated Cost', estimatedCost)}
+                        ${optionalRow('Recovery Time', recoveryTime)}
                     </div>
                 `;
             } catch (error) {
                 container.innerHTML = '<div style="font-size:11px; color: var(--blight);">Groq summary unavailable due to network/API error.</div>';
             }
+        }
+
+        function shareReport(resultId) {
+            const card = document.getElementById(`result-${resultId}`);
+            if (!card) {
+                alert('Report not found. Please generate a result first.');
+                return;
+            }
+
+            const getText = (selector) => {
+                const el = document.getElementById(selector);
+                return el ? el.innerText.trim() : '';
+            };
+
+            const crop = getText(`result-crop-${resultId}`);
+            const disease = card.querySelector('.result-title') ? card.querySelector('.result-title').innerText.trim() : '';
+            const severity = getText(`result-severity-${resultId}`);
+            const gps = getText(`result-location-${resultId}`);
+            const immediateActionEl = document.getElementById(`llm-immediate-action-${resultId}`);
+            const immediateAction = immediateActionEl ? immediateActionEl.innerText.trim() : 'Not available';
+
+            const reportText = [
+                '🚜 *AgriVision Field Alert*',
+                `🌱 Crop: ${crop || 'Unknown'}`,
+                `🦠 Disease: ${disease || 'Unknown'}`,
+                `⚠️ Severity: ${severity || 'Unknown'}`,
+                `📍 GPS / Location: ${gps || 'Unknown'}`,
+                `✅ Immediate Action: ${immediateAction}`
+            ].join('\n');
+
+            window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(reportText), '_blank');
         }
         
         function clearForm() {
