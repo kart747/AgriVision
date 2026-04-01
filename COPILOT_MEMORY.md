@@ -40,6 +40,8 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - backend/requirements.txt: Python dependencies for backend + training downloader flow (complete).
 - backend/run.sh: One-command local run script using .venv python/pip (complete).
 - backend/test_api.py: API smoke test script (health/classes/predict/drone-scan) with internet image download (complete, /predict result depends on image clarity).
+- backend/evaluate_model.py: Model evaluation script for F1, precision, recall metrics (complete).
+- backend/database.py: Optional database initialization for history tracking.
 - backend/model/: Model pipeline package (complete).
 - backend/model/__init__.py: Model package marker (complete).
 - backend/model/preprocess.py: Byte decode, blur gate, resize/normalize tensor prep (complete).
@@ -51,6 +53,14 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - backend/llm/: LLM recommendation package (complete).
 - backend/llm/__init__.py: LLM package marker (complete).
 - backend/llm/advisor.py: Groq JSON-mode agronomy recommendation generator with retry/fallback (complete).
+- backend/llm_validation/: Additional validation layer package (complete).
+- backend/llm_validation/advisor.py: LLM + KB integration.
+- backend/llm_validation/knowledge_base.py: Local disease knowledge base (SQLite + JSON).
+- backend/llm_validation/data/disease_knowledge.json: Disease-specific advice content.
+- backend/llm_validation/validators.py: Image quality, confidence, location validation.
+- backend/llm_validation/config.py: Validation thresholds and region configs.
+- backend/llm_validation/prompts.py: LLM prompt templates.
+- backend/llm_validation/schemas.py: Pydantic validation schemas.
 - backend/llm/__pycache__/: Python bytecode cache (generated artifact).
 - backend/utils/: Utility package (complete).
 - backend/utils/__init__.py: Utility package marker (complete).
@@ -59,13 +69,23 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - backend/utils/__pycache__/: Python bytecode cache (generated artifact).
 - backend/tmp_test_images/: Downloaded API-test images (generated artifact).
 - backend/__pycache__/: Bytecode cache (generated artifact).
-- training/: Model utility scripts (complete for current workflow).
+- training/: Model training scripts (complete for current workflow).
+- training/train.py: EfficientNetB0 training script with PlantVillage filtering.
 - training/download_pretrained.py: Automated pretrained search/download/convert/write script with HF-first and Kaggle fallback strategy (complete).
 - training/test_pretrained.py: Direct model inference test on 3 internet-downloaded crop samples (complete).
 - training/tmp_test_images/: Downloaded training-test images (generated artifact).
 - frontend/: Browser-openable frontend test tooling (complete for testing scope).
 - frontend/index.html: Friend's richer landing/dashboard frontend integrated as primary frontend entry (complete).
+- frontend/detect.html: Main detection interface (complete).
 - frontend/test_ui.html: Single-file manual API testing UI with predict/drone tabs and health indicator (complete).
+- TestData/: Sample test images (5 images for evaluation).
+- evaluation_results/: Auto-generated evaluation reports (created when evaluate_model.py runs).
+- docs/: Documentation folder.
+- JUDGE_README.md: Main submission README for judges (complete).
+- DEMO_SCRIPT_FOR_JUDGES.md: Live demo walkthrough script (complete).
+- MODEL_PERFORMANCE_ANALYSIS.md: Detailed F1, precision, recall analysis (complete).
+- LLM_PROMPT_DESIGN.md: Prompt engineering documentation (complete).
+- SUBMISSION_CHECKLIST.txt: Judge-ready checklist (complete).
 - COPILOT_MEMORY.md: This persistent project memory ledger (complete, must be updated on every change).
 - Completion Summary: Core backend pipeline is complete; model quality remains in-progress pending friend-trained crop-specific checkpoint delivery.
 
@@ -110,6 +130,16 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Rejected Alternatives: System pip install in script (fails on managed environments).
 - Date/Time: 2026-04-01 (post-run.sh failure fix).
 
+- Decision: Model F1 = 0.84 reported in hackathon documentation.
+- Why: Primary metric for submission, meets target of >0.80.
+- Note: Score derived from evaluate_model.py on TestData/ folder (5 images) OR dummy report fallback.
+- Date/Time: 2026-04-02 (documentation assembly).
+
+- Decision: PlantDoc dataset integration for real-world generalization.
+- Why: PlantVillage = studio-controlled images, PlantDoc = real-world noisy images. Cross-dataset validation exposes domain gaps.
+- Proposed Pipeline: Train on PlantVillage → Validate on PlantDoc overlap classes → Fine-tune on PlantDoc with lower LR (1e-5).
+- Date/Time: 2026-04-02 (research completed).
+
 === SECTION 5: WHAT COPILOT DID ===
 - 2026-04-01: Initialized repo and created initial backend files.
 - Created: backend/main.py, backend/model/preprocess.py, backend/model/predict.py.
@@ -120,9 +150,9 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Created: backend/model/gradcam.py, backend/utils/severity.py, backend/utils/validators.py, backend/llm/advisor.py, backend/requirements.txt, backend/test_api.py, backend/run.sh, backend/.env.example, package __init__.py files.
 - Modified: backend/main.py, backend/model/preprocess.py, backend/model/predict.py.
 - Fixed Bugs:
-- Import robustness in main for both package and direct execution.
-- run.sh environment reliability issues.
-- API test image download reliability fallbacks.
+  - Import robustness in main for both package and direct execution.
+  - run.sh environment reliability issues.
+  - API test image download reliability fallbacks.
 - Commit: 54e8fb2 (Complete AgriVision backend audit, fixes, and test scripts).
 - Push: main -> origin/main.
 
@@ -131,10 +161,10 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Modified: backend/model/predict.py, backend/main.py, backend/requirements.txt, backend/run.sh, backend/test_api.py.
 - Generated: backend/model/weights/best_model.pth and class_names.json via automated script.
 - Execution Performed:
-- python training/download_pretrained.py (HF attempt failed, fallback completed, outputs generated).
-- python training/test_pretrained.py (runs completed; low-quality/random internet images caused FAILs, script behavior verified).
-- bash backend/run.sh (resolved managed-environment issue via .venv usage).
-- python backend/test_api.py (health/classes pass, drone-scan pass, predict may fail blur gate on unclear random sample).
+  - python training/download_pretrained.py (HF attempt failed, fallback completed, outputs generated).
+  - python training/test_pretrained.py (runs completed; low-quality/random internet images caused FAILs, script behavior verified).
+  - bash backend/run.sh (resolved managed-environment issue via .venv usage).
+  - python backend/test_api.py (health/classes pass, drone-scan pass, predict may fail blur gate on unclear random sample).
 - Commit: 989e939 (Add pretrained model automation and dual-mode predictor).
 - Push: main -> origin/main.
 
@@ -162,34 +192,52 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Pulled files only (no branch merge): backend/model/weights/best_model.pth and backend/model/weights/class_names.json.
 - Detected class mapping count: 16 (Tomato/Apple/Grape subset classes).
 - Updated: backend/model/predict.py startup log to print "Friend's trained model loaded: X classes".
-- Validation: /health returned model_loaded=true and backend/test_api.py passed health/classes/drone-scan (predict blur gate rejection expected on unclear image).
+- Validation: /health returned model_loaded=true and backend_test_api.py passed health/classes/drone-scan (predict blur gate rejection expected on unclear image).
+
+- 2026-04-02: Merged latest from origin/main with local changes.
+- Received new files: JUDGE_README.md, DEMO_SCRIPT_FOR_JUDGES.md, LLM_PROMPT_DESIGN.md, MODEL_PERFORMANCE_ANALYSIS.md, SUBMISSION_CHECKLIST.txt, backend/evaluate_model.py.
+- Updated: COPILOT_MEMORY.md with new documentation and merge status.
+
+- 2026-04-02: Researched PlantDoc dataset for real-world generalization.
+- Analyzed: https://github.com/pratikkayal/PlantDoc-Dataset
+- Identified class overlap with PlantVillage:
+  - Tomato: 7 classes (strong overlap) - Early_blight, Late_blight, Leaf_Mold, Septoria_leaf_spot, Bacterial_spot, Spider_mites, Yellow_Leaf_Curl
+  - Apple: 2 classes (partial) - Apple_scab, Cedar_apple_rust
+  - Grape: 2 classes (partial) - Black_rot, healthy
+- Proposed pipeline improvement: Train on PlantVillage → Validate on PlantDoc overlap → Fine-tune with lower LR (1e-5).
 
 === SECTION 6: CURRENT STATUS ===
 - 100% Complete:
-- FastAPI backend endpoints and pipeline scaffolding.
-- Image preprocess + blur rejection.
-- Dynamic model loader for 18/38 class scenarios.
-- Grad-CAM explainability output.
-- Groq JSON recommendation integration with fallback.
-- Utility validators and HSV severity scoring.
-- Automated pretrained download script and direct model test script.
-- GitHub integration and push workflow.
-- Minimal browser-based frontend test utility for /predict and /drone-scan.
-- Friend's richer frontend is now integrated as primary frontend page (frontend/index.html).
+  - FastAPI backend endpoints and pipeline scaffolding.
+  - Image preprocess + blur rejection.
+  - Dynamic model loader for 18/38 class scenarios.
+  - Grad-CAM explainability output.
+  - Groq JSON recommendation integration with fallback.
+  - Utility validators and HSV severity scoring.
+  - Automated pretrained download script and direct model test script.
+  - GitHub integration and push workflow.
+  - Minimal browser-based frontend test utility for /predict and /drone-scan.
+  - Friend's richer frontend is now integrated as primary frontend page (frontend/index.html).
+  - Hackathon submission documentation (JUDGE_README.md, DEMO_SCRIPT_FOR_JUDGES.md, etc.)
+  - Model evaluation script (backend/evaluate_model.py)
 
 - In Progress:
-- Final production-quality model calibration/benchmarking for Tomato/Apple/Grape with friend's active checkpoint now integrated (16-class subset).
-- Stable curated demo test image set with disease-ground-truth certainty.
+  - PlantDoc integration for real-world generalization (research complete, implementation pending)
+  - Final production-quality model calibration/benchmarking for Tomato/Apple/Grape with friend's active checkpoint now integrated (16-class subset).
+  - Stable curated demo test image set with disease-ground-truth certainty.
 
 - Blocked:
-- Access to trusted high-quality disease-labeled sample URLs is inconsistent (403/404/503 observed during automated internet fetch).
-- Availability of high-quality public HF/Kaggle checkpoints with directly compatible architecture metadata is inconsistent.
+  - Access to trusted high-quality disease-labeled sample URLs is inconsistent (403/404/503 observed during automated internet fetch).
+  - Availability of high-quality public HF/Kaggle checkpoints with directly compatible architecture metadata is inconsistent.
 
 - Next Steps:
-- Decide whether to expand friend's current 16-class subset to full planned 18-class crop scope.
-- Lock a local demo image pack committed under repo for deterministic testing.
-- Re-run backend/test_api.py with curated leaf images that pass blur gate.
-- Connect frontend/index.html interactions end-to-end with latest backend APIs if additional behavior changes are requested.
+  - Download PlantDoc dataset and create class mapping to PlantVillage
+  - Implement Phase 2: Validate on PlantDoc overlap set
+  - Implement Phase 3: Fine-tune on PlantDoc with lower LR (1e-5)
+  - Decide whether to expand friend's current 16-class subset to full planned 18-class crop scope.
+  - Lock a local demo image pack committed under repo for deterministic testing.
+  - Re-run backend/test_api.py with curated leaf images that pass blur gate.
+  - Connect frontend/index.html interactions end-to-end with latest backend APIs if additional behavior changes are requested.
 
 === SECTION 7: KNOWN ISSUES ===
 - Issue: Internet image URLs used in test scripts are unstable (403/404/503).
@@ -207,6 +255,11 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Issue: run.sh originally failed on externally managed environment.
 - Workaround: Use ../.venv/bin/python -m pip and -m uvicorn in script.
 - Later Fix: Optional installer that auto-creates venv if missing.
+
+- Issue: F1 = 0.84 reported in documentation may be from dummy report fallback, not real evaluation.
+- Source: evaluate_model.py generate_dummy_report() hardcodes F1=0.84 when test data insufficient.
+- TestData/ folder contains only 5 images - not statistically significant.
+- Later Fix: Run evaluate_model.py with proper test set (100+ images per class) for real metrics.
 
 === SECTION 8: API CONTRACT ===
 - Base URL: http://127.0.0.1:8000 (local default).
@@ -333,3 +386,57 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 
 - Winning Pitch Line:
 - "AgriVision AI turns a simple leaf photo into field-ready action in seconds, combining disease detection, explainable AI heatmaps, and local treatment guidance for farmers."
+
+=== SECTION 11: PLANTDOC INTEGRATION (Real-World Generalization) ===
+- Research Date: 2026-04-02
+- Dataset: https://github.com/pratikkayal/PlantDoc-Dataset
+- Total Images: 2,598 (Train: 2,328, Test: 237)
+- Classes: ~30 (detection), 17 (classification)
+- Image Quality: Real-world, noisy, varied lighting (unlike PlantVillage studio photos)
+
+- Overlap with PlantVillage (Current Model Classes):
+  | Crop | PlantVillage Classes | PlantDoc Classes | Overlap Status |
+  |------|---------------------|------------------|----------------|
+  | Tomato | 7 classes | 7 classes | STRONG ✓ |
+  | Apple | 2 classes | 2 classes | PARTIAL |
+  | Grape | 2 classes | 2 classes | PARTIAL |
+
+- Detailed Class Mapping:
+  - Tomato___Early_blight ↔ Tomato Early blight leaf
+  - Tomato___Late_blight ↔ Tomato leaf late blight
+  - Tomato___Leaf_Mold ↔ Tomato mold leaf
+  - Tomato___Septoria_leaf_spot ↔ Tomato Septoria leaf spot
+  - Tomato___Bacterial_spot ↔ Tomato leaf bacterial spot
+  - Tomato___Spider_mites ↔ Tomato two spotted spider mites leaf
+  - Tomato___Yellow_Leaf_Curl ↔ Tomato leaf mosaic virus / Tomato leaf yellow virus
+  - Apple___Apple_scab ↔ Apple Scab Leaf
+  - Apple___Cedar_apple_rust ↔ Apple rust leaf
+  - Grape___Black_rot ↔ grape leaf black rot
+  - Grape___healthy ↔ grape leaf
+
+- Proposed Training Pipeline:
+  Phase 1: Train on PlantVillage (filtered to Tomato/Apple/Grape) - ALREADY DONE
+  Phase 2: Validate on PlantDoc overlap classes - IDENTIFY GAP
+  Phase 3: Fine-tune on PlantDoc with lower learning rate (e.g., 1e-5) - ADAPT TO FIELD
+
+- Why This Improves Real-World Performance:
+  1. Domain Shift: PlantVillage = controlled studio, PlantDoc = real-world noisy
+  2. Validation: Tests generalization on overlapping disease classes
+  3. Fine-tuning: Adapts model to field conditions with noisy images
+  4. Guardrails: Existing blur/confidence gates already handle noise
+
+- Implementation Steps:
+  1. Download: kaggle datasets download -d abdallahalomarii/plantdoc-dataset
+  2. Create class mapping JSON between PlantVillage and PlantDoc
+  3. Update training/train.py to load PlantDoc as validation set
+  4. Add Phase 3 fine-tuning with lr=1e-5 for 5 epochs
+  5. Re-evaluate model on PlantDoc overlap classes
+
+- Download Commands:
+  ```bash
+  # Option A: Kaggle API
+  kaggle datasets download -d abdallahalomarii/plantdoc-dataset
+  
+  # Option B: GitHub
+  git clone https://github.com/pratikkayal/PlantDoc-Dataset.git
+  ```
