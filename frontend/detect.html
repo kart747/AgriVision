@@ -479,9 +479,9 @@
                 
                 <!-- Crop Type Selection -->
                 <div class="form-section">
-                    <label class="form-label">Target Crop *</label>
+                    <label class="form-label">Target Crop (Optional)</label>
                     <select class="form-select" id="cropSelect">
-                        <option value="">Select a crop...</option>
+                        <option value="">Auto detect from image</option>
                         <option value="tomato">Tomato</option>
                         <option value="apple">Apple</option>
                         <option value="grape">Grape</option>
@@ -591,13 +591,13 @@
                 uploadPreview.src = e.target.result;
                 uploadPreview.classList.add('visible');
                 uploadZone.style.opacity = '0.5';
-                analyzeBtn.disabled = !cropSelect.value;
+                analyzeBtn.disabled = !selectedFile;
             };
             reader.readAsDataURL(file);
         }
         
         cropSelect.addEventListener('change', () => {
-            analyzeBtn.disabled = !selectedFile || !cropSelect.value;
+            analyzeBtn.disabled = !selectedFile;
         });
         
         /* ════════════════════════════════════ ANALYSIS ════════════════════════════════════ */
@@ -606,29 +606,62 @@
             const lat = document.getElementById('latitude').value;
             const lng = document.getElementById('longitude').value;
             
-            if (!crop || !selectedFile) {
-                alert('Please select a crop and upload an image');
+            if (!selectedFile) {
+                alert('Please upload an image');
                 return;
             }
             
             analyzeBtn.disabled = true;
             analyzeBtn.innerHTML = '<span class="loading-spinner"></span> Analyzing...';
             
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            formData.append('crop_hint', crop);
-            if (lat) formData.append('latitude', lat);
-            if (lng) formData.append('longitude', lng);
+            const buildFormData = (cropHint) => {
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+                if (cropHint) formData.append('crop_hint', cropHint);
+                if (lat) formData.append('latitude', lat);
+                if (lng) formData.append('longitude', lng);
+                return formData;
+            };
+
+            const parseErrorMessage = (errorData, statusCode) => {
+                let errorMessage = `Server error: ${statusCode}`;
+                if (typeof errorData?.detail === 'string') {
+                    errorMessage = errorData.detail;
+                } else if (Array.isArray(errorData?.detail)) {
+                    errorMessage = errorData.detail
+                        .map((item) => item?.msg || JSON.stringify(item))
+                        .join('; ');
+                } else if (errorData?.detail && typeof errorData.detail === 'object') {
+                    errorMessage = JSON.stringify(errorData.detail);
+                }
+                return errorMessage;
+            };
             
             try {
-                const response = await fetch(`${API_BASE_URL}/predict`, {
+                let response = await fetch(`${API_BASE_URL}/predict`, {
                     method: 'POST',
-                    body: formData
+                    body: buildFormData(crop)
                 });
-                
+
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    const errorMessage = errorData.detail || `Server error: ${response.status}`;
+                    const firstErrorData = await response.json().catch(() => ({}));
+                    let errorMessage = parseErrorMessage(firstErrorData, response.status);
+
+                    const isHintMismatch = /Crop hint mismatch/i.test(errorMessage);
+                    if (crop && isHintMismatch) {
+                        response = await fetch(`${API_BASE_URL}/predict`, {
+                            method: 'POST',
+                            body: buildFormData('')
+                        });
+                        if (response.ok) {
+                            const retryData = await response.json();
+                            displayResult(retryData);
+                            return;
+                        }
+
+                        const retryErrorData = await response.json().catch(() => ({}));
+                        errorMessage = parseErrorMessage(retryErrorData, response.status);
+                    }
                     
                     // Show error in results panel
                     const id = Date.now();
@@ -652,7 +685,7 @@
                         resultsPanel.innerHTML = '';
                     }
                     resultsPanel.insertAdjacentHTML('afterbegin', errorHTML);
-                    throw new Error(errorMessage);
+                    return;
                 }
                 
                 const data = await response.json();
@@ -660,8 +693,11 @@
                 
             } catch (error) {
                 console.error('Analysis error:', error);
-                // Fallback demo data for offline testing
-                console.log('Using demo data as fallback...');
+                // Fallback demo data only for network/offline failures.
+                const networkMessage = (error && error.message) ? error.message : 'Network error';
+                if (!/Failed to fetch|NetworkError|Load failed|ERR_CONNECTION|ERR_NETWORK/i.test(networkMessage)) {
+                    return;
+                }
                 const id = Date.now();
                 const timestamp = new Date().toLocaleString();
                 const demoHTML = `
@@ -717,7 +753,7 @@
         function displayResult(data) {
             const id = Date.now();
             const timestamp = new Date().toLocaleString();
-            const confidence = Math.round(data.confidence * 100);
+            const confidence = Math.round(Number(data.confidence || 0));
             const severity = data.severity_label || 'Unknown';
             const severityScore = Math.round(data.severity_score || 0);
             
