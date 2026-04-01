@@ -818,9 +818,20 @@
                         <span class="result-label">Damage Score:</span>
                         <span class="result-value">${severityScore}%</span>
                     </div>
+
+                    ${data.cam_image ? `
+                        <div style="margin-top: 12px;">
+                            <div style="font-size: 11px; color: var(--chloro); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Grad-CAM</div>
+                            <img src="${data.cam_image}" alt="Grad-CAM" style="width: 100%; max-height: 220px; object-fit: contain; border: 1px solid rgba(74, 222, 128, 0.2); background: rgba(0,0,0,0.2);">
+                        </div>
+                    ` : ''}
                     
                     <div class="result-recommendation">
                         ${recommendationHTML}
+                    </div>
+
+                    <div class="result-recommendation" id="grok-summary-${id}" style="margin-top:10px;">
+                        <div style="opacity:0.85; font-size:11px;">Loading Groq summary...</div>
                     </div>
                 </div>
             `;
@@ -841,9 +852,51 @@
                 confidence: confidence,
                 timestamp: timestamp
             });
+
+            fetchGrokSummary(data, id);
             
             // Scroll results into view
             document.getElementById(`result-${id}`).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function fetchGrokSummary(data, id) {
+            const container = document.getElementById(`grok-summary-${id}`);
+            if (!container) return;
+
+            try {
+                const payload = {
+                    crop: data.crop,
+                    disease: data.disease,
+                    confidence: Number(data.confidence || 0) / 100,
+                    severity: data.severity_label || 'Moderate',
+                    location: data.location || 'Mangalore, Karnataka, India',
+                    use_llm: true
+                };
+
+                const response = await fetch(`${API_BASE_URL}/generate-recommendation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    container.innerHTML = `<div style="font-size:11px; color: var(--blight);">Groq summary unavailable (${response.status}). ${errorText.slice(0, 120)}</div>`;
+                    return;
+                }
+
+                const advice = await response.json();
+                const summary = advice.summary || 'No summary returned.';
+                const source = advice.source || 'unknown';
+                container.innerHTML = `
+                    <div style="background: rgba(163, 230, 53, 0.08); border: 1px solid rgba(163, 230, 53, 0.25); padding: 12px; font-size: 12px; line-height: 1.6;">
+                        <div style="font-size: 11px; color: var(--spore); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Groq Summary (${source})</div>
+                        <div>${summary}</div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = '<div style="font-size:11px; color: var(--blight);">Groq summary unavailable due to network/API error.</div>';
+            }
         }
         
         function clearForm() {

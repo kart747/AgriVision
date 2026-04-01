@@ -146,8 +146,26 @@ def generate_advice_with_llm(
         kb_entry = kb.get_disease_context(crop, disease)
     
     if kb_entry is None:
-        logger.info("Disease not in knowledge base, using fallback for context")
-        return generate_fallback_advice(prediction_context, kb_entry)
+        crop = prediction_context.get("crop", "Unknown")
+        disease = prediction_context.get("disease", "Unknown")
+        logger.info(
+            "Disease not in knowledge base for LLM context: %s - %s. "
+            "Proceeding with minimal context.",
+            crop,
+            disease,
+        )
+        kb_entry = {
+            "disease": disease,
+            "symptoms": [],
+            "organic_treatments": [],
+            "chemical_treatments": [],
+            "recovery_time_days": 21,
+            "preventive_measures": [],
+            "notes": [
+                "This disease label is not present in local knowledge base; "
+                "generate cautious, evidence-based guidance."
+            ],
+        }
     
     try:
         # Call LLM API
