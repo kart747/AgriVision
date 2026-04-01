@@ -396,6 +396,51 @@
             color: var(--lab);
             line-height: 1.6;
         }
+
+        .gradcam-block {
+            margin-top: 14px;
+            padding: 12px;
+            background: rgba(12, 10, 5, 0.55);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 6px;
+        }
+
+        .gradcam-label {
+            font-size: 11px;
+            color: var(--spore);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gradcam-label::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--chloro);
+            box-shadow: 0 0 12px rgba(74, 222, 128, 0.85);
+        }
+
+        .gradcam-image {
+            width: 100%;
+            display: block;
+            max-height: 340px;
+            object-fit: contain;
+            border: 1px solid rgba(74, 222, 128, 0.25);
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 4px;
+        }
+
+        .gradcam-empty {
+            font-size: 11px;
+            color: var(--mist);
+            opacity: 0.75;
+            padding: 10px 0 2px 0;
+        }
         
         .loading-spinner {
             display: inline-block;
@@ -819,12 +864,14 @@
                         <span class="result-value">${severityScore}%</span>
                     </div>
 
-                    ${data.cam_image ? `
-                        <div style="margin-top: 12px;">
-                            <div style="font-size: 11px; color: var(--chloro); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Grad-CAM</div>
-                            <img src="${data.cam_image}" alt="Grad-CAM" style="width: 100%; max-height: 220px; object-fit: contain; border: 1px solid rgba(74, 222, 128, 0.2); background: rgba(0,0,0,0.2);">
-                        </div>
-                    ` : ''}
+                    <div class="gradcam-block">
+                        <div class="gradcam-label">Grad-CAM Heatmap</div>
+                        ${data.cam_image ? `
+                            <img class="gradcam-image" src="${data.cam_image}" alt="Grad-CAM heatmap for ${data.disease || 'prediction'}">
+                        ` : `
+                            <div class="gradcam-empty">Grad-CAM image not available for this result.</div>
+                        `}
+                    </div>
                     
                     <div class="result-recommendation">
                         ${recommendationHTML}
