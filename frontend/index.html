@@ -991,6 +991,25 @@
             font-size: 13px;
             color: var(--mist);
         }
+
+        .class-names-list {
+            width: min(1100px, 92vw);
+            margin: 20px auto 0;
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 10px;
+            text-align: left;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            color: var(--mist);
+        }
+
+        .class-names-list li {
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            background: rgba(26, 42, 18, 0.5);
+            padding: 10px 12px;
+        }
         
         .crops-footer .crop-name-future {
             color: var(--spore);
@@ -1240,7 +1259,7 @@
         
         <div class="scan-card">
             <div class="scan-image">
-                <img src="https://images.unsplash.com/photo-1592921870789-04563d55041c?w=800" alt="Tomato leaf scan">
+                <img src="https://images.unsplash.com/photo-1592921870789-04563d55041c?w=800" alt="Leaf scan">
                 <div class="scan-beam"></div>
             </div>
             <div class="scan-data">
@@ -1323,7 +1342,7 @@
                         <div class="timeline-label">ANALYZE</div>
                         <div class="timeline-terminal">> Loading CNN model...        [OK]
 > Running inference...  ████████ 100%
-> Crop: Tomato
+> Crop: Auto-detected
 > Disease: Early Blight (81.3%)
 > Recommendation: Apply copper fungicide</div>
                     </div>
@@ -1404,72 +1423,15 @@
     <!-- SECTION 5: CROPS -->
     <section class="crops" id="crops">
         <div class="crops-header">
-            <h2 class="crops-title"><span class="number">3</span> <span class="text">CROPS. INFINITE INTELLIGENCE.</span></h2>
+            <h2 class="crops-title"><span class="number" id="cropCount">0</span> <span class="text">CROPS. INFINITE INTELLIGENCE.</span></h2>
         </div>
         
-        <div class="crops-grid">
-            <div class="crop-card">
-                <div class="crop-image">
-                    <img src="https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=800" alt="Tomato">
-                </div>
-                <div class="crop-info">
-                    <div>
-                        <div class="crop-name">TOMATO</div>
-                        <div class="crop-diseases">9 diseases tracked</div>
-                    </div>
-                    <div class="crop-dots">
-                        <div class="severity-dot"></div>
-                        <div class="severity-dot"></div>
-                        <div class="severity-dot"></div>
-                    </div>
-                    <div class="crop-confidence">CNN confidence avg: 91.4%</div>
-                </div>
-            </div>
-            
-            <div class="crop-card">
-                <div class="crop-image">
-                    <img src="https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=800" alt="Apple">
-                </div>
-                <div class="crop-info">
-                    <div>
-                        <div class="crop-name">APPLE</div>
-                        <div class="crop-diseases">7 diseases tracked</div>
-                    </div>
-                    <div class="crop-dots">
-                        <div class="severity-dot"></div>
-                        <div class="severity-dot"></div>
-                        <div class="severity-dot"></div>
-                    </div>
-                    <div class="crop-confidence">CNN confidence avg: 88.7%</div>
-                </div>
-            </div>
-            
-            <div class="crop-card">
-                <div class="crop-image">
-                    <img src="https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=800" alt="Grape">
-                </div>
-                <div class="crop-info">
-                    <div>
-                        <div class="crop-name">GRAPE</div>
-                        <div class="crop-diseases">6 diseases tracked</div>
-                    </div>
-                    <div class="crop-dots">
-                        <div class="severity-dot"></div>
-                        <div class="severity-dot"></div>
-                        <div class="severity-dot"></div>
-                    </div>
-                    <div class="crop-confidence">CNN confidence avg: 93.1%</div>
-                </div>
-            </div>
-        </div>
+        <div class="crops-grid" id="cropsGrid"></div>
         
         <div class="crops-footer">
-            More crops coming soon  ···  
-            <span class="crop-name-future">wheat</span> · 
-            <span class="crop-name-future">rice</span> · 
-            <span class="crop-name-future">corn</span> · 
-            <span class="crop-name-future">potato</span>
+            Live classes from backend model
         </div>
+        <ul id="classNamesList" class="class-names-list"></ul>
     </section>
     
     <!-- SECTION 6: CTA -->
@@ -1478,7 +1440,7 @@
             <div class="cta-line-1">STOP GUESSING.</div>
             <div class="cta-line-2">START KNOWING.</div>
         </h2>
-        <p class="cta-subtext">Tomato. Apple. Grape. Upload a leaf. Diagnosis in under 3 seconds.</p>
+        <p class="cta-subtext">Upload a leaf. Diagnosis in under 3 seconds.</p>
         <input id="leafInput" type="file" accept="image/*" hidden>
         <div class="upload-zone" id="uploadZone">
             <div class="upload-icon">🌿</div>
@@ -1637,6 +1599,7 @@
         // ═══════════════════════════════════════════════════════════════════
 
         const API_BASE = 'http://127.0.0.1:8000';
+        const CLASSES_URL = 'http://localhost:8000/classes';
         const uploadZone = document.getElementById('uploadZone');
         const uploadText = document.getElementById('uploadText');
         const leafInput = document.getElementById('leafInput');
@@ -1644,7 +1607,98 @@
         const analysisStatus = document.getElementById('analysisStatus');
         const analysisCard = document.getElementById('analysisCard');
         const camPreview = document.getElementById('camPreview');
+        const cropsGrid = document.getElementById('cropsGrid');
+        const classNamesList = document.getElementById('classNamesList');
+        const cropCount = document.getElementById('cropCount');
         let selectedFile = null;
+
+        function toTitleCase(text) {
+            return String(text || '')
+                .toLowerCase()
+                .replace(/\b[a-z]/g, (ch) => ch.toUpperCase());
+        }
+
+        function formatDiseaseName(raw) {
+            const value = String(raw || '');
+            if (!value.includes('___')) {
+                return toTitleCase(value.replace(/_/g, ' '));
+            }
+            const [crop, disease] = value.split('___');
+            const cropLabel = toTitleCase(crop.replace(/_/g, ' '));
+            const diseaseLabel = toTitleCase(disease.replace(/_/g, ' '));
+            return `${cropLabel} — ${diseaseLabel}`;
+        }
+
+        function groupByCrop(classNames) {
+            const groups = new Map();
+            classNames.forEach((name) => {
+                const [crop, disease] = String(name).split('___');
+                const cropLabel = toTitleCase((crop || 'Unknown').replace(/_/g, ' '));
+                const diseaseLabel = toTitleCase((disease || name).replace(/_/g, ' '));
+                if (!groups.has(cropLabel)) {
+                    groups.set(cropLabel, []);
+                }
+                groups.get(cropLabel).push(diseaseLabel);
+            });
+            return groups;
+        }
+
+        function renderDynamicCrops(classNames) {
+            if (!cropsGrid || !classNamesList || !cropCount) return;
+
+            const grouped = groupByCrop(classNames);
+            cropCount.textContent = String(grouped.size);
+
+            cropsGrid.innerHTML = '';
+            grouped.forEach((diseases, crop) => {
+                const card = document.createElement('div');
+                card.className = 'crop-card visible';
+                card.innerHTML = `
+                    <div class="crop-image">
+                        <img src="https://images.unsplash.com/photo-1587049633312-d628ae50a8ae?w=900" alt="${crop} leaf">
+                    </div>
+                    <div class="crop-info">
+                        <div>
+                            <div class="crop-name">${crop.toUpperCase()}</div>
+                            <div class="crop-diseases">${diseases.length} classes tracked</div>
+                        </div>
+                        <div class="crop-dots">
+                            <div class="severity-dot"></div>
+                            <div class="severity-dot"></div>
+                            <div class="severity-dot"></div>
+                        </div>
+                        <div class="crop-confidence">${diseases.slice(0, 3).join(' · ')}</div>
+                    </div>
+                `;
+                cropsGrid.appendChild(card);
+            });
+
+            classNamesList.innerHTML = '';
+            classNames.forEach((name) => {
+                const li = document.createElement('li');
+                li.textContent = formatDiseaseName(name);
+                classNamesList.appendChild(li);
+            });
+        }
+
+        async function fetchAndRenderClasses() {
+            try {
+                const res = await fetch(CLASSES_URL);
+                if (!res.ok) {
+                    throw new Error(`Classes API failed (${res.status})`);
+                }
+                const data = await res.json();
+                const classNames = Array.isArray(data?.classes) ? data.classes : [];
+                renderDynamicCrops(classNames);
+            } catch (error) {
+                if (classNamesList) {
+                    classNamesList.innerHTML = '';
+                    const li = document.createElement('li');
+                    li.textContent = 'Could not load class list from backend.';
+                    classNamesList.appendChild(li);
+                }
+            }
+        }
 
         function setStatus(message, isError = false) {
             if (!analysisStatus) return;
@@ -1738,6 +1792,9 @@
         if (analyzeBtn) {
             analyzeBtn.addEventListener('click', runPredict);
         }
+
+        fetchAndRenderClasses();
+
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
