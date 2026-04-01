@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import torch
 from torchvision import models
@@ -11,59 +11,60 @@ SUPPORTED_CROPS = {"Tomato", "Apple", "Grape"}
 
 
 class DiseasePredictor:
-    def __init__(self) -> None:
-        self.base_path = Path(__file__).resolve().parent
-        self.weights_path = self.base_path / "weights" / "best_model.pth"
-        self.classes_path = self.base_path / "weights" / "class_names.json"
-        self.model: Optional[torch.nn.Module] = None
+    def __init__(self, weights_path: Path, classes_path: Path, num_classes: int = 18) -> None:
+        self.weights_path = weights_path
+        self.classes_path = classes_path
+        self.num_classes = num_classes
+        self.model: torch.nn.Module | None = None
         self.class_names: List[str] = []
         self.model_loaded = False
 
-        self._load_class_names()
-        self._load_model()
+    def load_resources(self) -> None:
+        self.class_names = self._load_class_names()
+        self.model = self._load_model()
+        self.model_loaded = self.model is not None
 
-    def _load_class_names(self) -> None:
+    def _load_class_names(self) -> List[str]:
         if not self.classes_path.exists():
             print(f"[AgriVision] Missing class names file: {self.classes_path}")
-            self.class_names = []
-            return
+            return []
 
         with self.classes_path.open("r", encoding="utf-8") as f:
             payload = json.load(f)
 
         if isinstance(payload, list):
-            self.class_names = [str(item) for item in payload]
-        elif isinstance(payload, dict):
-            # Supports either index->name or name->index shaped json.
-            if all(str(k).isdigit() for k in payload.keys()):
-                self.class_names = [
-                    str(v) for _, v in sorted(payload.items(), key=lambda kv: int(kv[0]))
-                ]
-            else:
-                self.class_names = [str(k) for k in payload.keys()]
+            names = [str(item) for item in payload]
+        elif isinstance(payload, dict) and all(str(k).isdigit() for k in payload.keys()):
+            names = [str(v) for _, v in sorted(payload.items(), key=lambda kv: int(kv[0]))]
         else:
-            raise ValueError("class_names.json must be a list or dict")
+            raise ValueError("class_names.json must be a list or index-keyed dict")
+
+        if len(names) != self.num_classes:
+            print(
+                "[AgriVision] Warning: class_names count is "
+                f"{len(names)}, expected {self.num_classes}."
+            )
+        return names
 
     def _build_model(self) -> torch.nn.Module:
         model = models.efficientnet_b0(weights=None)
         in_features = model.classifier[1].in_features
-        model.classifier[1] = torch.nn.Linear(in_features, 38)
+        model.classifier[1] = torch.nn.Linear(in_features, self.num_classes)
         return model
 
-    def _load_model(self) -> None:
+    def _load_model(self) -> torch.nn.Module | None:
         if not self.weights_path.exists():
             print(
                 "[AgriVision] Model weights not found at "
                 f"{self.weights_path}. Please add best_model.pth before inference."
             )
-            self.model_loaded = False
-            return
+            return None
 
-        self.model = self._build_model()
+        model = self._build_model()
         state_dict = torch.load(self.weights_path, map_location=torch.device("cpu"))
-        self.model.load_state_dict(state_dict)
-        self.model.eval()
-        self.model_loaded = True
+        model.load_state_dict(state_dict)
+        model.eval()
+        return model
 
     @staticmethod
     def _parse_class_name(class_name: str) -> Dict[str, object]:
@@ -114,26 +115,20 @@ class DiseasePredictor:
 
         crop_name = str(parsed["crop_name"])
         if crop_name not in SUPPORTED_CROPS:
-            return {
-                "error": (
-                    "Unsupported crop detected. This model currently supports only "
-                    "Tomato, Apple, and Grape."
-                ),
-                "disease_class": disease_class,
-                "confidence": round(confidence_pct, 2),
-                "crop_name": crop_name,
-            }
+            raise ValueError(
+                "Unsupported crop detected. This model currently supports only "
+                "Tomato, Apple, and Grape."
+            )
 
-        severity = self._severity_from_confidence(confidence_pct)
+        severity_label = self._severity_from_confidence(confidence_pct)
+        flagged = confidence_pct < 75.0
         return {
-            "disease_class": disease_class,
+            "class_index": idx,
             "confidence": round(confidence_pct, 2),
-            "severity": severity,
+            "severity_label": severity_label,
             "crop_name": crop_name,
             "disease_name": parsed["disease_name"],
             "is_healthy": bool(parsed["is_healthy"]),
-            "confidence_gate_triggered": confidence_pct < 60.0,
+            "flagged": flagged,
+            "flag_reason": "Low confidence (<75%)." if flagged else None,
         }
-
-
-predictor = DiseasePredictor()
