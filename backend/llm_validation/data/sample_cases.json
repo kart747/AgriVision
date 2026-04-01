@@ -1,0 +1,82 @@
+{
+  "sample_cases": [
+    {
+      "case_id": "CASE_001",
+      "description": "Tomato TYLCV in Mangalore",
+      "crop": "Tomato",
+      "disease": "Tomato Yellow Leaf Curl Virus",
+      "confidence": 0.92,
+      "severity": "Moderate",
+      "location": "Mangalore, Karnataka, India",
+      "time_context": "Early Morning",
+      "image_quality": "good",
+      "expected_validation": true,
+      "notes": "Classic whitefly-transmitted viral disease in tropical region"
+    },
+    {
+      "case_id": "CASE_002",
+      "description": "Apple Scab in Himachal Pradesh",
+      "crop": "Apple",
+      "disease": "Apple Scab",
+      "confidence": 0.87,
+      "severity": "Mild",
+      "location": "Himachal Pradesh, India",
+      "time_context": "Mid-day",
+      "image_quality": "good",
+      "expected_validation": true,
+      "notes": "Fungal disease common in cool, wet hill regions"
+    },
+    {
+      "case_id": "CASE_003",
+      "description": "Tomato Early Blight, low confidence",
+      "crop": "Tomato",
+      "disease": "Early Blight (Tomato)",
+      "confidence": 0.55,
+      "severity": "Mild",
+      "location": "Punjab, India",
+      "time_context": "Evening",
+      "image_quality": "blurry",
+      "expected_validation": false,
+      "notes": "Should trigger re-upload request due to low confidence and blur"
+    },
+    {
+      "case_id": "CASE_004",
+      "description": "Grape Powdery Mildew, Maharashtra",
+      "crop": "Grape",
+      "disease": "Powdery Mildew (Grape)",
+      "confidence": 0.78,
+      "severity": "Moderate",
+      "location": "Maharashtra, India",
+      "time_context": "Mid-day",
+      "image_quality": "good",
+      "expected_validation": true,
+      "notes": "Common in moderate-temperature vineyards"
+    },
+    {
+      "case_id": "CASE_005",
+      "description": "Unknown disease, not in knowledge base",
+      "crop": "Tomato",
+      "disease": "Unknown Leaf Spot",
+      "confidence": 0.65,
+      "severity": "Mild",
+      "location": "Tamil Nadu, India",
+      "time_context": "Early Morning",
+      "image_quality": "good",
+      "expected_validation": true,
+      "notes": "Should trigger fallback advisor with generic recommendations"
+    },
+    {
+      "case_id": "CASE_006",
+      "description": "Grape Downy Mildew, high severity",
+      "crop": "Grape",
+      "disease": "Downy Mildew (Grape)",
+      "confidence": 0.85,
+      "severity": "Severe",
+      "location": "Himachal Pradesh, India",
+      "time_context": "Evening",
+      "image_quality": "good",
+      "expected_validation": true,
+      "notes": "High severity case requiring immediate intervention"
+    }
+  ]
+}

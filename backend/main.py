@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -13,6 +14,8 @@ from pydantic import BaseModel
 
 try:
     from .llm.advisor import get_recommendation
+    from .llm_validation.advisor import generate_advice
+    from .llm_validation.validators import run_validation_summary
     from .model.gradcam import generate_gradcam_base64
     from .model.predict import DiseasePredictor
     from .model.preprocess import preprocess_image
@@ -20,6 +23,8 @@ try:
     from .utils.validators import validate_file, validate_gps
 except ImportError:
     from llm.advisor import get_recommendation
+    from llm_validation.advisor import generate_advice
+    from llm_validation.validators import run_validation_summary
     from model.gradcam import generate_gradcam_base64
     from model.predict import DiseasePredictor
     from model.preprocess import preprocess_image
@@ -27,6 +32,7 @@ except ImportError:
     from utils.validators import validate_file, validate_gps
 
 APP_VERSION = "2.0.0"
+logger = logging.getLogger(__name__)
 
 
 class Recommendation(BaseModel):
@@ -59,6 +65,42 @@ class DroneScanResponse(BaseModel):
     healthy_count: int
     infected_count: int
     per_leaf_results: List[Dict[str, Any]]
+
+
+class ValidationRequest(BaseModel):
+    confidence: float
+    crop: Optional[str] = "Tomato"
+    location: Optional[str] = "Mangalore, Karnataka, India"
+
+
+class ValidationResponse(BaseModel):
+    passed: bool
+    checks: Dict[str, Any]
+    warnings: List[str]
+
+
+class AdviceRequest(BaseModel):
+    crop: str
+    disease: str
+    confidence: float
+    severity: Optional[str] = "Moderate"
+    location: Optional[str] = "Mangalore, Karnataka, India"
+    month: Optional[str] = None
+    use_llm: Optional[bool] = False
+
+
+class AdviceResponse(BaseModel):
+    source: str
+    crop: str
+    disease: str
+    summary: str
+    immediate_action: Optional[str] = None
+    organic_treatment: Optional[List[str]] = None
+    chemical_treatment: Optional[List[str]] = None
+    recovery_time: Optional[str] = None
+    preventive_measures: Optional[List[str]] = None
+    warnings: List[str] = []
+    notes: Optional[List[str]] = None
 
 
 def _format_location(latitude: Optional[float], longitude: Optional[float]) -> str:
@@ -284,6 +326,73 @@ async def drone_scan(images: List[UploadFile] = File(...)) -> DroneScanResponse:
         infected_count=infected_count,
         per_leaf_results=per_leaf_results,
     )
+
+
+@app.post("/validation-demo", response_model=ValidationResponse)
+def validation_demo(request: ValidationRequest) -> ValidationResponse:
+    try:
+        result = run_validation_summary(
+            image_path=None,
+            confidence=request.confidence,
+            location=request.location,
+            crop=request.crop,
+        )
+        return ValidationResponse(**result)
+    except Exception as exc:
+        logger.exception("Validation demo error")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/generate-recommendation", response_model=AdviceResponse)
+def generate_recommendation(request: AdviceRequest) -> AdviceResponse:
+    try:
+        month = request.month or datetime.now().strftime("%B")
+        context = {
+            "crop": request.crop,
+            "disease": request.disease,
+            "confidence": request.confidence,
+            "severity": request.severity,
+            "location": request.location,
+            "time_context": month,
+        }
+        advice = generate_advice(context, use_llm=bool(request.use_llm))
+        return AdviceResponse(**advice)
+    except Exception as exc:
+        logger.exception("Recommendation generation error")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/llm-stats")
+def llm_stats() -> Dict[str, Any]:
+    return {
+        "status": "ok",
+        "llm_module_available": True,
+        "llm_features": [
+            "Confidence validation",
+            "Location validation",
+            "Advice generation",
+            "Organic treatments",
+            "Chemical treatments",
+            "Recovery time estimates",
+            "Preventive measures",
+            "Expert warnings",
+        ],
+        "supported_crops_fallback": ["Apple", "Tomato", "Grape"],
+        "confidence_threshold": 0.60,
+        "location_bounds": {
+            "latitude_min": 8.4,
+            "latitude_max": 37.6,
+            "longitude_min": 68.7,
+            "longitude_max": 97.25,
+            "region": "India",
+        },
+        "validation_checks": [
+            "Confidence score (>60%)",
+            "Location bounds (India)",
+            "Crop presence",
+            "Disease-crop matching",
+        ],
+    }
 
 
 if __name__ == "__main__":
