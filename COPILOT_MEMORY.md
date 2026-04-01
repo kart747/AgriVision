@@ -47,8 +47,8 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - backend/model/preprocess.py: Byte decode, blur gate, resize/normalize tensor prep (complete).
 - backend/model/predict.py: Dynamic model loader/inference for 18-class and 38-class scenarios (complete, supports architecture metadata).
 - backend/model/gradcam.py: Grad-CAM overlay generation to base64 data URI (complete).
-- backend/model/weights/best_model.pth: Current generated model checkpoint for backend loading (complete artifact).
-- backend/model/weights/class_names.json: Current class index mapping (38 canonical PlantVillage classes) (complete artifact).
+- backend/model/weights/best_model.pth: Current generated model checkpoint for backend loading (feature/model-llm-ui-updates source; complete artifact).
+- backend/model/weights/class_names.json: Current class index mapping (14 class names from feature/model-llm-ui-updates; differs from the 17-class training log) (complete artifact).
 - backend/model/__pycache__/: Python bytecode cache (generated artifact, not source of truth).
 - backend/llm/: LLM recommendation package (complete).
 - backend/llm/__init__.py: LLM package marker (complete).
@@ -130,10 +130,10 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Rejected Alternatives: System pip install in script (fails on managed environments).
 - Date/Time: 2026-04-01 (post-run.sh failure fix).
 
-- Decision: Model F1 = 0.84 reported in hackathon documentation.
-- Why: Primary metric for submission, meets target of >0.80.
-- Note: Score derived from evaluate_model.py on TestData/ folder (5 images) OR dummy report fallback.
-- Date/Time: 2026-04-02 (documentation assembly).
+- Decision: Model F1 = 0.0583 from the verified training log in origin/feature/model-llm-ui-updates.
+- Why: Use the real logged metric instead of the earlier sample/dummy value.
+- Note: `training/train_log2.txt` reports Macro F1 0.0583, accuracy 0.17, macro precision 0.07, macro recall 0.08.
+- Date/Time: 2026-04-02 (verified against branch logs).
 
 - Decision: PlantDoc dataset integration for real-world generalization.
 - Why: PlantVillage = studio-controlled images, PlantDoc = real-world noisy images. Cross-dataset validation exposes domain gaps.
@@ -198,19 +198,18 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Received new files: JUDGE_README.md, DEMO_SCRIPT_FOR_JUDGES.md, LLM_PROMPT_DESIGN.md, MODEL_PERFORMANCE_ANALYSIS.md, SUBMISSION_CHECKLIST.txt, backend/evaluate_model.py.
 - Updated: COPILOT_MEMORY.md with new documentation and merge status.
 
-- 2026-04-02: Researched PlantDoc dataset for real-world generalization.
-- Analyzed: https://github.com/pratikkayal/PlantDoc-Dataset
-- Identified class overlap with PlantVillage:
-  - Tomato: 7 classes (strong overlap) - Early_blight, Late_blight, Leaf_Mold, Septoria_leaf_spot, Bacterial_spot, Spider_mites, Yellow_Leaf_Curl
-  - Apple: 2 classes (partial) - Apple_scab, Cedar_apple_rust
-  - Grape: 2 classes (partial) - Black_rot, healthy
-- Proposed pipeline improvement: Train on PlantVillage → Validate on PlantDoc overlap → Fine-tune with lower LR (1e-5).
+- 2026-04-02: Pulled the new trained model branch and verified its metrics.
+- Source branch: origin/feature/model-llm-ui-updates.
+- Copied files only (no merge): backend/model/weights/best_model.pth, backend/model/weights/class_names.json, backend/model/weights/train_log.txt, backend/model/weights/train_log2.txt, backend/model/weights/train_log3.txt.
+- Branch class map count: 14 labels.
+- Branch training log metrics: Macro F1 0.0583, accuracy 0.17, macro precision 0.07, macro recall 0.08.
+- Date/Time: 2026-04-02 (verified against branch logs).
 
 === SECTION 6: CURRENT STATUS ===
 - 100% Complete:
   - FastAPI backend endpoints and pipeline scaffolding.
   - Image preprocess + blur rejection.
-  - Dynamic model loader for 18/38 class scenarios.
+  - Dynamic model loader for checkpoint/class-map mismatch scenarios.
   - Grad-CAM explainability output.
   - Groq JSON recommendation integration with fallback.
   - Utility validators and HSV severity scoring.
@@ -223,7 +222,7 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 
 - In Progress:
   - PlantDoc integration for real-world generalization (research complete, implementation pending)
-  - Final production-quality model calibration/benchmarking for Tomato/Apple/Grape with friend's active checkpoint now integrated (16-class subset).
+  - Final production-quality model calibration/benchmarking for Tomato/Apple/Grape with the latest branch checkpoint and real metrics.
   - Stable curated demo test image set with disease-ground-truth certainty.
 
 - Blocked:
@@ -234,7 +233,7 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
   - Download PlantDoc dataset and create class mapping to PlantVillage
   - Implement Phase 2: Validate on PlantDoc overlap set
   - Implement Phase 3: Fine-tune on PlantDoc with lower LR (1e-5)
-  - Decide whether to expand friend's current 16-class subset to full planned 18-class crop scope.
+  - Decide whether to keep the current 14-label class map or realign it with the 17-class training log/checkpoint pair.
   - Lock a local demo image pack committed under repo for deterministic testing.
   - Re-run backend/test_api.py with curated leaf images that pass blur gate.
   - Connect frontend/index.html interactions end-to-end with latest backend APIs if additional behavior changes are requested.
@@ -256,10 +255,10 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Workaround: Use ../.venv/bin/python -m pip and -m uvicorn in script.
 - Later Fix: Optional installer that auto-creates venv if missing.
 
-- Issue: F1 = 0.84 reported in documentation may be from dummy report fallback, not real evaluation.
-- Source: evaluate_model.py generate_dummy_report() hardcodes F1=0.84 when test data insufficient.
-- TestData/ folder contains only 5 images - not statistically significant.
-- Later Fix: Run evaluate_model.py with proper test set (100+ images per class) for real metrics.
+- Issue: Older documentation referenced sample F1 values that no longer match the verified branch logs.
+- Source: `origin/feature/model-llm-ui-updates` training logs now show Macro F1 0.0583, accuracy 0.17, macro precision 0.07, macro recall 0.08.
+- TestData/ folder still contains only 5 images - not statistically significant for evaluation.
+- Later Fix: Run `evaluate_model.py` with a proper test set (100+ images per class) for an independent benchmark.
 
 === SECTION 8: API CONTRACT ===
 - Base URL: http://127.0.0.1:8000 (local default).

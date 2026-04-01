@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -25,6 +26,7 @@ class DiseasePredictor:
         self.model: torch.nn.Module | None = None
         self.class_names: List[str] = []
         self.supported_indices: List[int] = []
+        self.model_metrics: Dict[str, Optional[float]] = {}
         self.model_loaded = False
 
     def load_resources(self) -> None:
@@ -32,9 +34,14 @@ class DiseasePredictor:
         self.detected_num_classes = len(self.class_names)
         self._refresh_supported_indices()
         self.model = self._load_model()
+        self.model_metrics = self._load_metrics_summary()
         self.model_loaded = self.model is not None
         if self.model_loaded:
-            print(f"Friend's trained model loaded: {self.detected_num_classes} classes")
+            f1_value = self.model_metrics.get("f1")
+            if f1_value is not None:
+                print(f"New model loaded: {self.detected_num_classes} classes, F1={f1_value:.4f}")
+            else:
+                print(f"New model loaded: {self.detected_num_classes} classes, F1=pending evaluation run")
 
     def _load_class_names(self) -> List[str]:
         if not self.classes_path.exists():
@@ -72,6 +79,130 @@ class DiseasePredictor:
         if all(k.startswith("module.") for k in state_dict.keys()):
             return {k.replace("module.", "", 1): v for k, v in state_dict.items()}
         return state_dict
+
+    @staticmethod
+    def _infer_checkpoint_num_classes(state_dict: Dict[str, torch.Tensor], architecture: str, fallback: int) -> int:
+        arch = architecture.lower()
+        candidate_keys: List[str] = []
+        if arch in {"efficientnet_b0", "efficientnet-b0", "efficientnetb0", "mobilenet_v2", "mobilenetv2"}:
+            candidate_keys = ["classifier.1.weight"]
+        elif arch in {"resnet50", "resnet_50"}:
+            candidate_keys = ["fc.weight"]
+
+        for key in candidate_keys:
+            tensor = state_dict.get(key)
+            if tensor is not None and getattr(tensor, "ndim", 0) == 2:
+                return int(tensor.shape[0])
+
+        for key, tensor in state_dict.items():
+            if key.endswith("classifier.1.weight") and getattr(tensor, "ndim", 0) == 2:
+                return int(tensor.shape[0])
+            if key.endswith("fc.weight") and getattr(tensor, "ndim", 0) == 2:
+                return int(tensor.shape[0])
+
+        return fallback
+
+    @staticmethod
+    def _resize_classifier_head(model: torch.nn.Module, architecture: str, num_classes: int) -> torch.nn.Module:
+        arch = architecture.lower()
+
+        if arch in {"efficientnet_b0", "efficientnet-b0", "efficientnetb0"}:
+            old_head = model.classifier[1]
+            new_head = torch.nn.Linear(old_head.in_features, num_classes)
+            copy_rows = min(old_head.out_features, num_classes)
+            with torch.no_grad():
+                if copy_rows > 0:
+                    new_head.weight[:copy_rows].copy_(old_head.weight[:copy_rows])
+                    new_head.bias[:copy_rows].copy_(old_head.bias[:copy_rows])
+            model.classifier[1] = new_head
+            return model
+
+        if arch in {"mobilenet_v2", "mobilenetv2"}:
+            old_head = model.classifier[1]
+            new_head = torch.nn.Linear(old_head.in_features, num_classes)
+            copy_rows = min(old_head.out_features, num_classes)
+            with torch.no_grad():
+                if copy_rows > 0:
+                    new_head.weight[:copy_rows].copy_(old_head.weight[:copy_rows])
+                    new_head.bias[:copy_rows].copy_(old_head.bias[:copy_rows])
+            model.classifier[1] = new_head
+            return model
+
+        if arch in {"resnet50", "resnet_50"}:
+            old_head = model.fc
+            new_head = torch.nn.Linear(old_head.in_features, num_classes)
+            copy_rows = min(old_head.out_features, num_classes)
+            with torch.no_grad():
+                if copy_rows > 0:
+                    new_head.weight[:copy_rows].copy_(old_head.weight[:copy_rows])
+                    new_head.bias[:copy_rows].copy_(old_head.bias[:copy_rows])
+            model.fc = new_head
+            return model
+
+        raise ValueError(f"Unsupported architecture metadata in checkpoint: {architecture}")
+
+    def _load_metrics_summary(self) -> Dict[str, Optional[float]]:
+        candidates = [
+            self.weights_path.with_name("train_log2.txt"),
+            self.weights_path.with_name("train_log.txt"),
+            self.weights_path.with_name("evaluation_summary.txt"),
+            self.weights_path.with_name("metrics.txt"),
+            self.weights_path.with_name("metrics.json"),
+        ]
+
+        for candidate in candidates:
+            if not candidate.exists():
+                continue
+
+            try:
+                if candidate.suffix == ".json":
+                    with candidate.open("r", encoding="utf-8") as handle:
+                        payload = json.load(handle)
+                    if isinstance(payload, dict):
+                        return {
+                            "f1": payload.get("f1") or payload.get("macro_f1") or payload.get("macro_f1_score"),
+                            "accuracy": payload.get("accuracy") or payload.get("overall_accuracy"),
+                            "precision": payload.get("precision") or payload.get("macro_precision"),
+                            "recall": payload.get("recall") or payload.get("macro_recall"),
+                            "source": candidate.name,
+                        }
+
+                text = candidate.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+
+            metrics = self._parse_metrics_text(text)
+            if metrics.get("f1") is not None or metrics.get("accuracy") is not None:
+                metrics["source"] = candidate.name
+                return metrics
+
+        return {}
+
+    @staticmethod
+    def _parse_metrics_text(text: str) -> Dict[str, Optional[float]]:
+        metrics: Dict[str, Optional[float]] = {
+            "f1": None,
+            "accuracy": None,
+            "precision": None,
+            "recall": None,
+        }
+
+        f1_match = re.search(r"(?:Final Test F1|Macro F1 Score)[:=]\s*([0-9]*\.?[0-9]+)", text)
+        if f1_match:
+            metrics["f1"] = float(f1_match.group(1))
+
+        accuracy_match = re.search(r"(?:Overall Accuracy|accuracy)\s+([0-9]*\.?[0-9]+)", text)
+        if accuracy_match:
+            metrics["accuracy"] = float(accuracy_match.group(1))
+
+        macro_match = re.search(r"macro avg\s+([0-9]*\.?[0-9]+)\s+([0-9]*\.?[0-9]+)\s+([0-9]*\.?[0-9]+)", text)
+        if macro_match:
+            metrics["precision"] = float(macro_match.group(1))
+            metrics["recall"] = float(macro_match.group(2))
+            if metrics["f1"] is None:
+                metrics["f1"] = float(macro_match.group(3))
+
+        return metrics
 
     def _build_model(self, architecture: str, num_classes: int) -> torch.nn.Module:
         arch = architecture.lower()
@@ -111,27 +242,43 @@ class DiseasePredictor:
         if isinstance(payload, dict) and "state_dict" in payload:
             state_dict = payload["state_dict"]
             architecture = str(payload.get("architecture", "efficientnet_b0"))
-            ckpt_num_classes = int(payload.get("num_classes", self.detected_num_classes or 18))
         else:
             state_dict = payload
             architecture = "efficientnet_b0"
-            ckpt_num_classes = self.detected_num_classes or 18
 
         state_dict = self._strip_prefix_if_needed(state_dict)
-        target_num_classes = self.detected_num_classes or ckpt_num_classes
+        ckpt_num_classes = self._infer_checkpoint_num_classes(
+            state_dict,
+            architecture,
+            self.detected_num_classes or 18,
+        )
 
-        model = self._build_model(architecture=architecture, num_classes=target_num_classes)
+        model = self._build_model(architecture=architecture, num_classes=ckpt_num_classes)
         model.load_state_dict(state_dict, strict=False)
+
+        if self.detected_num_classes and self.detected_num_classes != ckpt_num_classes:
+            print(
+                f"[AgriVision] Adjusting classifier head from {ckpt_num_classes} checkpoint classes "
+                f"to {self.detected_num_classes} class_names entries."
+            )
+            model = self._resize_classifier_head(model, architecture, self.detected_num_classes)
+
         model.eval()
         return model
 
     @staticmethod
     def _parse_class_name(class_name: str) -> Dict[str, object]:
-        normalized = class_name.replace("___", "__")
-        parts = normalized.split("__", maxsplit=1)
+        if "___" in class_name:
+            normalized = class_name.replace("___", "__")
+            parts = normalized.split("__", maxsplit=1)
+            crop_raw = parts[0] if parts else "Unknown"
+            disease_raw = parts[1] if len(parts) > 1 else "Unknown"
+        else:
+            parts = class_name.split("_", maxsplit=1)
+            crop_raw = parts[0] if parts else "Unknown"
+            disease_raw = parts[1] if len(parts) > 1 else "Unknown"
 
-        crop = parts[0].replace("_", " ").strip().title() if parts else "Unknown"
-        disease_raw = parts[1] if len(parts) > 1 else "Unknown"
+        crop = crop_raw.replace("_", " ").strip().title() if crop_raw else "Unknown"
         disease_name = disease_raw.replace("_", " ").strip().title()
         is_healthy = "healthy" in disease_raw.lower()
 

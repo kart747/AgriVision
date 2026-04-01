@@ -22,7 +22,7 @@ This submission provides a **complete, production-ready AI system** for crop dis
 |-------|-----------|--------|-------|
 | **01** | Drone Capture | ✅ | GPS EXIF auto-detection in frontend |
 | **02** | Preprocessing | ✅ | Blur detection, normalization, validation |
-| **03** | CNN Model | ✅ | EfficientNet B0 (F1=0.84) |
+| **03** | CNN Model | ✅ | EfficientNet B0 (F1=0.0583) |
 | **04** | Prediction | ✅ | Disease + confidence + severity + Grad-CAM |
 | **05** | LLM Module | ✅ | Prompt V2 (schema-locked) + Groq + disease-specific KB fallback |
 | **06** | Web App UI | ✅ | Flask/Uvicorn backend, HTML5 frontend |
@@ -34,23 +34,24 @@ This submission provides a **complete, production-ready AI system** for crop dis
 ### Model Performance
 
 ```
-Reference / sample metrics from `backend/evaluate_model.py` (regenerate if using a newer checkpoint):
-Macro F1 Score:   0.84 ✅
-Overall Accuracy: 0.85 ✅
-Precision:        0.87
-Recall:           0.82
+Verified on 2026-04-02 from training logs in `origin/feature/model-llm-ui-updates`:
+Macro F1 Score:   0.0583
+Overall Accuracy:  0.17
+Macro Precision:   0.07
+Macro Recall:      0.08
 
-Top Classes:
-  • Tomato Healthy:     F1=0.93 (recall 95%)
-  • Tomato Early Blight: F1=0.85 (balanced)
-  • Apple Healthy:      F1=0.93 (recall 92%)
-  
-Challenged Classes:
-  • Apple Scab:         F1=0.76 (require clearer images)
-  • Grape Mildew:       F1=0.79 (visual similarity)
+Top classes from the verified log:
+  • Tomato Yellow Leaf Curl Virus: F1=0.38 (recall 0.67)
+  • Grape Black_rot:               F1=0.31 (precision 0.36)
+  • Tomato Leaf Mold:              F1=0.08
+
+Weak / failed classes from the verified log:
+  • Apple___Apple_scab:            F1=0.00
+  • Apple___Cedar_apple_rust:      F1=0.00
+  • Grape___Esca_(Black_Measles):  F1=0.00
 ```
 
-**Full metrics source:** `backend/evaluate_model.py` sample report values, mirrored in `evaluation_results/evaluation_summary.txt` when generated.
+**Full metrics source:** `training/train_log2.txt` in `origin/feature/model-llm-ui-updates`, copied into `backend/model/weights/` and verified on 2026-04-02.
 
 ### System Validation
 
@@ -191,10 +192,10 @@ No ML jargon. Just upload → see recommendation. Designed for field use.
 > "A farmer in Mangalore detecting Early Blight doesn't just need to know WHAT disease it is. They need to know WHAT TO DO in THEIR region. In Kerala's monsoon season, spray timing matters more than in Rajasthan. Our LLM generates location-aware advice. That's the innovation."
 
 ### On Accuracy
-> "F1=0.84 is the right target for this domain. Too high (95%+) would mean overfitting on the training dataset. Too low (<75%) would be unusable. Our 60% confidence gate ensures only reliable predictions reach farmers. Effective accuracy on displayed results is 91%."
+> "The verified training logs report Macro F1=0.0583, accuracy=0.17, macro precision=0.07, and macro recall=0.08. The confidence gate still prevents low-confidence outputs from reaching farmers."
 
 ### On Edge Case Handling
-> "Apple Scab is our weakest class (F1=0.76). Why? Visually similar to Powdery Mildew. Our response: confidence gate catches uncertain cases and asks for a clearer photo. Farmers take multiple photos, model gets better. Graceful degradation, not failure."
+> "The weakest verified classes in the current branch log are Apple Scab, Apple Cedar Apple Rust, and Esca, each at F1=0.00. The response is still graceful degradation: ask for a clearer photo and keep the confidence gate in place."
 
 ### On Real-World Deployment
 > "This system runs on a laptop with zero GPU. Model loads in 2 seconds. Inference is <1 second per image. Can work with spotty internet (LLM optional, KB fallback available). Designed for a farmer in a field, not a research lab."
@@ -330,6 +331,6 @@ Built during the AI Hackathon 2026, Yenepoya Institute of Technology.
 
 ---
 
-**Last Updated:** April 1, 2026  
+**Last Updated:** April 2, 2026  
 **Status:** Ready for live demo  
 **GitHub:** https://github.com/kart747/AgriVision
