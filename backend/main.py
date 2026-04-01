@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 try:
     from .llm.advisor import get_recommendation
@@ -39,6 +39,10 @@ class Recommendation(BaseModel):
     immediate_action: str
     local_treatment: str
     weather_warning: str
+    organic_treatment: List[str] = Field(default_factory=list)
+    chemical_treatment: List[str] = Field(default_factory=list)
+    recovery_time: str = ""
+    preventive_measures: List[str] = Field(default_factory=list)
 
 
 class PredictSuccessResponse(BaseModel):
@@ -170,6 +174,10 @@ def _build_predict_result(
             "immediate_action": str(recommendation.get("immediate_action", "")),
             "local_treatment": str(recommendation.get("local_treatment", "")),
             "weather_warning": str(recommendation.get("weather_warning", "")),
+            "organic_treatment": list(recommendation.get("organic_treatment", [])),
+            "chemical_treatment": list(recommendation.get("chemical_treatment", [])),
+            "recovery_time": str(recommendation.get("recovery_time", "")),
+            "preventive_measures": list(recommendation.get("preventive_measures", [])),
         },
         "flagged": False,
         "flag_reason": None,

@@ -882,7 +882,24 @@
             // Parse recommendation - handle both object and string formats
             let recommendationHTML = '';
             if (typeof data.recommendation === 'object' && data.recommendation !== null) {
-                // Backend format: object with immediate_action, local_treatment, weather_warning
+                const organic = Array.isArray(data.recommendation.organic_treatment)
+                    ? data.recommendation.organic_treatment
+                    : [];
+                const chemical = Array.isArray(data.recommendation.chemical_treatment)
+                    ? data.recommendation.chemical_treatment
+                    : [];
+                const preventive = Array.isArray(data.recommendation.preventive_measures)
+                    ? data.recommendation.preventive_measures
+                    : [];
+
+                const toBulletList = (items) => {
+                    if (!items.length) return 'None';
+                    return `<ul style="margin: 6px 0 0 18px; padding: 0;">${items
+                        .map(item => `<li style="margin-bottom: 4px;">${item}</li>`)
+                        .join('')}</ul>`;
+                };
+
+                // Backend format: object with immediate/local/weather + extended treatment fields
                 recommendationHTML = `
                     <div style="background: rgba(74, 222, 128, 0.1); padding: 12px; border-left: 3px solid var(--chloro); margin-top: 8px;">
                         <strong style="color: var(--chloro);">✓ Treatment Plan:</strong><br>
@@ -890,6 +907,10 @@
                             <div><strong>Immediate Action:</strong> ${data.recommendation.immediate_action || 'None'}</div>
                             <div style="margin-top: 6px;"><strong>Local Treatment:</strong> ${data.recommendation.local_treatment || 'None'}</div>
                             <div style="margin-top: 6px;"><strong>Weather Advisory:</strong> ${data.recommendation.weather_warning || 'None'}</div>
+                            <div style="margin-top: 8px;"><strong>Organic Treatment Options:</strong>${toBulletList(organic)}</div>
+                            <div style="margin-top: 8px;"><strong>Chemical Treatment Options:</strong>${toBulletList(chemical)}</div>
+                            <div style="margin-top: 8px;"><strong>Time to Recovery:</strong> ${data.recommendation.recovery_time || 'Unknown'}</div>
+                            <div style="margin-top: 8px;"><strong>Preventive Measures:</strong>${toBulletList(preventive)}</div>
                         </div>
                     </div>
                 `;

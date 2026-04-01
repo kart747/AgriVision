@@ -24,7 +24,7 @@ This submission provides a **complete, production-ready AI system** for crop dis
 | **02** | Preprocessing | ✅ | Blur detection, normalization, validation |
 | **03** | CNN Model | ✅ | EfficientNet B0 (F1=0.84) |
 | **04** | Prediction | ✅ | Disease + confidence + severity + Grad-CAM |
-| **05** | LLM Module | ✅ | Groq llama3-8b with knowledge base fallback |
+| **05** | LLM Module | ✅ | Prompt V2 (schema-locked) + Groq + disease-specific KB fallback |
 | **06** | Web App UI | ✅ | Flask/Uvicorn backend, HTML5 frontend |
 
 ---
@@ -34,7 +34,8 @@ This submission provides a **complete, production-ready AI system** for crop dis
 ### Model Performance
 
 ```
-Macro F1 Score:   0.84 ✅ (Target: >0.80)
+Reference / sample metrics from `backend/evaluate_model.py` (regenerate if using a newer checkpoint):
+Macro F1 Score:   0.84 ✅
 Overall Accuracy: 0.85 ✅
 Precision:        0.87
 Recall:           0.82
@@ -49,7 +50,7 @@ Challenged Classes:
   • Grape Mildew:       F1=0.79 (visual similarity)
 ```
 
-**Full metrics:** See `evaluation_results/evaluation_summary.txt`
+**Full metrics source:** `backend/evaluate_model.py` sample report values, mirrored in `evaluation_results/evaluation_summary.txt` when generated.
 
 ### System Validation
 
@@ -61,6 +62,8 @@ Challenged Classes:
 
 ✅ Safety Features:
   • LLM fallback if Groq unavailable
+  • Prompt V2 with strict JSON schema enforcement
+  • Confidence-aware cautioning (<60% => verify before spray)
   • Explainability (Grad-CAM heatmaps)
   • Transparent confidence scores
 ```
@@ -72,13 +75,15 @@ Challenged Classes:
 ### Backend Stack
 - **Framework:** FastAPI (Python)
 - **Model:** EfficientNet B0 (PyTorch)
-- **LLM:** Groq API (llama3-8b, free tier)
-- **Knowledge Base:** SQLite + JSON
+- **LLM:** Groq llama3 family (prompt-engineered)
+- **Knowledge Base:** JSON disease KB (SQLite optional for history)
 
 **Key Files:**
 - `backend/model/predict.py` — Core CNN inference
 - `backend/model/gradcam.py` — Explainability
-- `backend/llm_validation/advisor.py` — LLM integration
+- `backend/llm/advisor.py` — Live `/predict` LLM recommendations
+- `backend/llm_validation/prompts.py` — Prompt V2 templates and validation path
+- `backend/llm_validation/advisor.py` — Extended LLM + KB integration
 - `backend/main.py` — FastAPI endpoints
 
 ### Frontend Stack
@@ -167,12 +172,15 @@ Show farmers WHERE the model looked. Builds trust. Not a black box.
 
 ### 3. Dual-Layer Safety
 - **Confidence gate:** Rejects uncertain predictions
-- **Knowledge base fallback:** Works even if LLM unavailable
+- **Knowledge base fallback:** Works even if LLM unavailable (disease-specific, not hardcoded)
 
-### 4. GPS EXIF Parsing
+### 4. Prompt Engineering V2
+Schema-constrained, confidence-aware prompt templates ensure deterministic JSON output and safer recommendations.
+
+### 5. GPS EXIF Parsing
 Auto-fills location from photo metadata. Enables location-aware recommendations without extra user input.
 
-### 5. Simple, Farmer-First UI
+### 6. Simple, Farmer-First UI
 No ML jargon. Just upload → see recommendation. Designed for field use.
 
 ---

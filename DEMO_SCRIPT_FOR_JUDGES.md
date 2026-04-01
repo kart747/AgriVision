@@ -172,9 +172,10 @@ if blur_score < BLUR_THRESHOLD:
 
 **Technical details when asked:**
 - Model: llama3-8b via Groq (free tier)
-- Temperature: 0.3 (factual, not creative)
-- Context: Disease KB + location + month
-- Fallback: If LLM fails, KB-based rules activate
+- Prompt: Prompt V2 (schema-locked JSON + confidence-aware rules)
+- Temperature: 0.2-0.3 (factual, low-variance output)
+- Context: Disease KB + location + month + confidence gate status
+- Fallback: If LLM fails, disease-specific KB recommendations activate
 
 ---
 
@@ -275,8 +276,9 @@ if blur_score < BLUR_THRESHOLD:
 > our local Disease Knowledge Base — a hand-curated JSON file with
 > proven treatments for each disease-crop combination.
 > 
-> The farmer still gets recommendations, just from rules instead of the LLM.
-> The UI shows: 'source: knowledge_base' so transparency is maintained.
+> The farmer still gets recommendations, just from the disease-specific
+> knowledge base instead of the LLM. We do not use a single hardcoded
+> generic answer for all diseases.
 > 
 > This is critical for deployment — farmers in low-connectivity areas
 > can STILL get advice without internet."

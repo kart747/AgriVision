@@ -1,380 +1,284 @@
-# LLM Prompt Engineering Documentation
-**AgriVision — AI Hackathon 2026**
+# LLM Prompt Engineering Documentation (V2)
+AgriVision - Matrix Fusion 4.0 AI Hackathon 2026
 
 ---
 
-## Overview
+## 1. Objective
 
-The AgriVision system uses a **Large Language Model (LLM) context layer** to convert raw disease predictions into actionable, location-aware farming recommendations.
+The LLM layer converts CNN predictions into **actionable, location-aware farmer guidance**.
 
-**Model Used:** Groq (llama3-8b via free API)  
-**Approach:** Few-shot prompt engineering with structured output  
-**Purpose:** From disease label → human-readable recovery plan
+Input from vision stack:
+- crop
+- disease
+- confidence
+- severity
+- location (GPS / user input)
+- time context (month)
 
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────┐
-│  CNN Prediction Output                  │
-│  (disease, confidence, severity)        │
-└────────────────┬────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────┐
-│  LLM Prompt Builder                     │
-│  (Context aggregation)                  │
-└────────────────┬────────────────────────┘
-                 │
-       ┌─────────┼─────────┐
-       │         │         │
-       ▼         ▼         ▼
-    CROP    DISEASE   LOCATION
-              │
-              ▼
-    ┌──────────────────────────┐
-    │ Disease Knowledge Base   │
-    │ (JSON: symptoms, drugs)  │
-    └──────────────────────────┘
-              │
-              ▼
-    ┌──────────────────────────┐
-    │ Groq LLM API             │
-    │ (llama3-8b-8192)         │
-    └──────────────────────────┘
-              │
-              ▼
-    ┌──────────────────────────┐
-    │ Structured Output        │
-    │ (immediate_action,       │
-    │  local_treatment,        │
-    │  weather_warning)        │
-    └──────────────────────────┘
-```
+Output to UI:
+- structured recommendations with safety-aware wording
+- consistent JSON fields for reliable parsing
+- fallback guidance if LLM is unavailable
 
 ---
 
-## Prompt Design
+## 2. Design Goals For Problem Statement
 
-### **Context Variables**
+Prompt V2 is tuned for judge criteria:
+- practical recommendations, not generic chatbot text
+- location + seasonal adaptation in advice
+- confidence-aware cautioning before chemical action
+- predictable machine-readable output
+- anti-hallucination constraints
 
-Each LLM call receives:
+---
 
-```python
-{
-    "crop": "Tomato",                      # from CNN
-    "disease": "Early Blight",             # from CNN
-    "confidence": 0.87,                    # from CNN (0-1)
-    "severity": "Moderate",                # from CNN
-    "location": "Mangalore, Karnataka",    # from image EXIF GPS
-    "month": "April",                      # current month
-    "weather": {"humidity": "high", ...}   # optional context
-}
-```
+## 3. Runtime Paths
 
-### **Base Prompt Structure**
+### A) Live predict path (used by /predict)
+- File: backend/llm/advisor.py
+- Model: Groq llama3-8b-8192
+- Output keys:
+  - immediate_action
+  - local_treatment
+  - weather_warning
+- Fallback: disease-specific knowledge-base response
 
-```
-You are an expert agricultural advisor with 20+ years of experience 
-in crop disease management across India.
+### B) Judge/extended recommendation path (used by /generate-recommendation)
+- Files:
+  - backend/llm_validation/prompts.py
+  - backend/llm_validation/advisor.py
+- Model config: from backend/llm_validation/config.py
+- Output schema:
+  - source
+  - crop
+  - disease
+  - summary
+  - organic_treatment
+  - chemical_treatment
+  - recovery_time
+  - preventive_measures
+  - warnings
+  - notes
 
-A farmer has detected {disease} in their {crop} field 
-in {location} during {month}.
+---
 
-Prediction confidence: {confidence}%
-Severity level: {severity}
+## 4. Prompt V2 - System Prompt Strategy
 
-Provide IMMEDIATELY ACTIONABLE recommendations.
-```
+System prompt enforces:
+- JSON-only output
+- exact schema keys
+- urgency handling for Severe/Critical severity
+- re-validation warning when confidence is low
+- region-aware recommendations using location + season context
+- no invented chemicals, regulations, or unsupported claims
 
-### **Few-Shot Examples** (in-context learning)
+This prevents:
+- markdown or prose leakage
+- hallucinated products/dosages
+- unstable formatting in UI
 
-```
-EXAMPLE 1:
-Input: Tomato, Early Blight, Kerala, 92% confidence
-Output:
-1. IMMEDIATE (Next 2 hours): Remove infected leaves with sterilized pruner
-2. SPRAY (This evening): Mancozeb (0.3%) OR Chlorothalonil
-3. WEATHER: High humidity today — spray by 4 PM before evening dew
-4. MONITOR: Check daily; disease spreads fast in wet conditions
-Recovery: 7-10 days with intervention
+---
 
-EXAMPLE 2:
-Input: Apple, Scab, Himachal, 68% confidence (low)
-Output:
-1. FIRST: Capture clearer photo of infected area — confidence is borderline
-2. INSPECT: Check other trees for similar symptoms
-3. IF CONFIRMED: Sulfur spray (0.5%) every 10 days
-4. PREVENTION: Improve canopy air flow; remove fallen leaves
-Recovery: 14-21 days
-```
+## 5. Prompt V2 - User Prompt Template
 
-### **Output Format Constraint**
+User prompt is deterministic and sectioned:
+- TASK
+- PREDICTION_CONTEXT
+- KNOWLEDGE_BASE_SIGNALS
+- RESPONSE_REQUIREMENTS
 
-```
-Always structure output as:
-{
-  "immediate_action": "...",
-  "local_treatment": "...", 
-  "weather_warning": "...",
-  "recovery_time": "7-10 days"
-}
+Important logic embedded in prompt context:
+- confidence gate status derived from threshold (0.60)
+- recovery baseline from knowledge base
+- instructions for farmer-friendly language
+- warnings required when confidence is low
+
+---
+
+## 6. Safety And Reliability Controls
+
+### Confidence-aware behavior
+If confidence is below threshold:
+- prompt instructs warning before chemical spray
+- encourages clearer image recapture and validation
+
+### Response normalization
+In advisor post-processing, fields are normalized so missing arrays do not break downstream parsing.
+
+### Validation
+Prompt response validation checks required schema fields before accepting output.
+
+### Fallback (no hardcoded generic output path)
+If Groq API key is missing or API fails:
+- system returns knowledge-base-backed disease-specific recommendations
+- unknown disease still returns safe generic guidance + consult expert warning
+
+---
+
+## 7. Why This Is Better Than V1
+
+V1 limitations:
+- broad generic instructions
+- weaker schema enforcement
+- limited confidence-gated behavior
+
+V2 improvements:
+- stronger contract and deterministic structure
+- explicit safety and uncertainty handling
+- tighter grounding on knowledge-base context
+- better consistency for judge live demos
+
+---
+
+## 8. Judge Talking Points (Use Verbatim)
+
+1. "Our prompt is not just descriptive. It is constraint-driven and schema-driven, so the UI always receives structured, parseable output."
+2. "We explicitly model uncertainty: if confidence is low, the recommendation asks for re-capture/verification before chemical spray."
+3. "We combine model prediction + location + season + curated disease knowledge to produce region-aware actions instead of generic chatbot advice."
+4. "If LLM fails, recommendation quality degrades gracefully to disease-specific knowledge-base guidance, not random hardcoded text."
+
+---
+
+## 9. Example Prompt V2 Context (Simplified)
+
+```text
+PREDICTION_CONTEXT:
+- crop: Tomato
+- disease: Tomato Early Blight
+- confidence: 58.0%
+- severity: Moderate
+- location: Mangalore, Karnataka, India
+- time_context: April
+- confidence_gate_status: LOW (threshold 0.60)
+
+KNOWLEDGE_BASE_SIGNALS:
+- symptoms:
+  - Brown concentric lesions
+  - Yellow halo on leaves
+- notes:
+  - Spreads faster under high humidity
+
+RESPONSE_REQUIREMENTS:
+- Return JSON only with required keys.
+- Include warning about re-capture/verification before chemical spray.
 ```
 
 ---
 
-## Knowledge Base Integration
+## 10. File Map
 
-The system uses a **JSON disease knowledge base** that LLM can reference:
+- backend/llm/advisor.py
+- backend/llm_validation/prompts.py
+- backend/llm_validation/advisor.py
+- backend/llm_validation/config.py
+- backend/llm_validation/data/disease_knowledge.json
 
-**File:** `backend/llm_validation/data/disease_knowledge.json`
+---
+
+## 11. Versioning
+
+Prompt template versions in metadata:
+- system_prompt_version: 2.0
+- user_prompt_template_version: 2.0
+
+This is the version evaluated in current submission package.
+
+---
+
+## 12. Sample Prompt-Response Pairs
+
+### Pair A: High Confidence Case (Tomato Early Blight)
+
+Sample Prompt (condensed):
+
+```text
+PREDICTION_CONTEXT:
+- crop: Tomato
+- disease: Tomato Early Blight
+- confidence: 0.89
+- severity: Moderate
+- location: Mangalore, Karnataka, India
+- time_context: April
+- confidence_gate_status: PASS (threshold 0.60)
+
+KNOWLEDGE_BASE_SIGNALS:
+- symptoms: Brown concentric lesions, yellow leaf halo
+- notes: Spreads quickly in high humidity
+- expected_recovery_days: 21
+
+RESPONSE_REQUIREMENTS:
+- JSON only
+- include treatment options and preventive measures
+```
+
+Sample Response:
 
 ```json
 {
-  "tomato": {
-    "early_blight": {
-      "symptoms": ["brown concentric rings", "yellowing"],
-      "organic_treatment": ["neem oil", "copper fungicide"],
-      "chemical_treatment": ["mancozeb", "chlorothalonil"],
-      "recovery_days": "7-10",
-      "prevention": ["improve drainage", "remove infected leaves"]
-    },
-    "...": "..."
-  }
+  "immediate_action": "Remove visibly infected lower leaves within 24 hours and isolate plant waste.",
+  "local_treatment": "Start fungicidal schedule immediately and keep canopy dry with morning irrigation only.",
+  "weather_warning": "High humidity in coastal Karnataka can accelerate spread; avoid evening watering and spraying before rain.",
+  "organic_treatment": [
+    "Spray neem oil-based bio-fungicide on affected area every 5-7 days.",
+    "Use copper-based organic fungicide as per label direction."
+  ],
+  "chemical_treatment": [
+    "Apply Mancozeb-based fungicide as per labeled dose.",
+    "Rotate with Chlorothalonil-class option to reduce resistance risk."
+  ],
+  "recovery_time": "14-21 days with timely intervention",
+  "preventive_measures": [
+    "Maintain spacing for airflow between plants.",
+    "Remove fallen infected debris weekly.",
+    "Monitor new lesions every 2 days during humid weather."
+  ]
 }
 ```
 
-**LLM Integration:**
-1. CNN detects disease → Query KB for baseline info
-2. Pass KB context + user location to Groq
-3. LLM enriches with location-specific timing (e.g., "monsoon risk")
-4. Return formatted recommendation
+### Pair B: Low Confidence Case (Apple Scab)
 
----
+Sample Prompt (condensed):
 
-## Actual Prompt Used in Code
+```text
+PREDICTION_CONTEXT:
+- crop: Apple
+- disease: Apple Scab
+- confidence: 0.58
+- severity: Mild
+- location: Himachal Pradesh, India
+- time_context: March
+- confidence_gate_status: LOW (threshold 0.60)
 
-**Location:** `backend/llm_validation/advisor.py:generate_advice()`
+KNOWLEDGE_BASE_SIGNALS:
+- symptoms: Olive-brown lesions, leaf spotting
+- notes: Visual overlap with powdery mildew can occur
+- expected_recovery_days: 21
 
-```python
-def generate_advice(crop, disease, confidence, severity, location, 
-                   kb_entry=None, month=None):
-    
-    kb_context = f"""
-    Disease Knowledge Base:
-    - Symptoms: {kb_entry.get('symptoms', [])}
-    - Organic treatments: {kb_entry.get('organic', [])}
-    - Chemical treatments: {kb_entry.get('chemical', [])}
-    - Recovery time: {kb_entry.get('recovery_days', 'unknown')}
-    """
-    
-    prompt = f"""
-    You are an expert agricultural advisor in India.
-    
-    A farmer detected {disease} in {crop} in {location} ({month}).
-    Model confidence: {confidence*100:.0f}%
-    Severity: {severity}
-    
-    Knowledge Base:
-    {kb_context}
-    
-    Provide 3-4 actionable steps:
-    1. IMMEDIATE action (next 2-6 hours)
-    2. LOCAL TREATMENT (region-specific for {location})
-    3. WEATHER CONSIDERATION (monsoon/dry season impact)
-    4. RECOVERY TIMELINE
-    
-    Be concise. Assume farmer has basic spraying equipment.
-    Format as: "Step 1: ... Step 2: ..."
-    """
-    
-    response = client.messages.create(
-        model="llama3-8b-8192",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=256,
-        temperature=0.3  # Low temp = factual, not creative
-    )
-    
-    return parse_response(response.content[0].text)
+RESPONSE_REQUIREMENTS:
+- JSON only
+- include caution for low-confidence prediction before chemical spray
 ```
 
----
+Sample Response:
 
-## Sample Prompt-Response Pairs
-
-### **Example 1: Tomato Early Blight (High Confidence)**
-
-**Input:**
-```
-Crop: Tomato
-Disease: Early Blight  
-Confidence: 89%
-Severity: Moderate
-Location: Mangalore, Karnataka
-Month: April
-```
-
-**Prompt Sent:**
-```
-You are an expert agricultural advisor in India.
-
-A farmer detected Early Blight in Tomato in Mangalore, Karnataka (April).
-Model confidence: 89%
-Severity: Moderate
-
-Knowledge Base:
-- Symptoms: brown concentric rings, yellowing leaves
-- Organic treatments: neem oil, copper fungicide
-- Chemical treatments: mancozeb, chlorothalonil
-- Recovery time: 7-10 days
-
-Provide 3-4 actionable steps:
-1. IMMEDIATE action (next 2-6 hours)
-2. LOCAL TREATMENT (region-specific for Mangalore, Karnataka)
-3. WEATHER CONSIDERATION (monsoon/dry season impact)
-4. RECOVERY TIMELINE
-```
-
-**LLM Response:**
-```
-Step 1: Immediately remove infected leaves with a sterilized pruner — 
-        don't use hands to avoid spread. Dispose in a sealed bag.
-
-Step 2: Spray mancozeb (0.3%) or local equivalent on all remaining foliage 
-        and soil. Mangalore's high humidity accelerates fungal growth — 
-        spray by evening (4-5 PM) before dew forms.
-
-Step 3: WEATHER: April pre-monsoon in Kerala = high humidity + rain risk. 
-        Rain washes off spray, so reapply after 48 hours if rain occurs. 
-        Good news: disease slows in non-rainy periods.
-
-Step 4: With immediate intervention, expect recovery in 7-10 days. 
-        Monitor daily for new spots on younger leaves.
-```
-
----
-
-### **Example 2: Apple Scab (Borderline Confidence)**
-
-**Input:**
-```
-Crop: Apple
-Disease: Scab
-Confidence: 62%
-Severity: Mild
-Location: Himachal Pradesh
-Month: March
-```
-
-**LLM Decision:**
-```
-⚠️ Confidence is borderline (62% vs 60% threshold).
-
-Step 1: FIRST — Request farmer capture a clearer, closer photo of the 
-        infected apple/leaf. Model confidence is low, so visual confirmation 
-        is critical before treatment.
-
-Step 2: In the meantime, inspect other trees — if you see similar patterns, 
-        it's likely scab. Scab spreads slowly in dry March.
-
-Step 3: IF CONFIRMED after second photo: Apply sulfur spray (0.5%) every 
-        10-14 days through April-May. Sulfur is organic and effective for 
-        scab in Himalayan climates.
-
-Step 4: Recovery/control timeline: 14-21 days visually, though scab is 
-        chronic — prevention (spore cleanup) is key.
-```
-
----
-
-## Fallback & Error Handling
-
-**If LLM API fails or is unavailable:**
-
-1. Query **knowledge base** for disease entry
-2. Return **rule-based recommendation** (pre-written, safe defaults)
-3. Log: `source: "knowledge_base"` (vs. `source: "llm"`)
-
-**Example fallback:**
 ```json
 {
-  "source": "knowledge_base",
-  "immediate_action": "Remove infected plant parts",
-  "local_treatment": "Apply copper fungicide or neem oil",
-  "weather_warning": "Avoid spraying if rain forecast",
-  "recovery_time": "7-14 days"
+  "immediate_action": "Capture 2-3 clearer close-up photos from different leaves before final spray decision.",
+  "local_treatment": "Prune heavily affected leaves and improve canopy airflow while awaiting verification.",
+  "weather_warning": "Avoid spray in windy or rainy windows; use calm, dry morning conditions after verification.",
+  "organic_treatment": [
+    "Use sulfur-based organic spray after confirmation.",
+    "Collect and dispose infected fallen leaves away from orchard."
+  ],
+  "chemical_treatment": [
+    "Use approved scab fungicide only after re-validation confirms diagnosis."
+  ],
+  "recovery_time": "~21 days with early and confirmed intervention",
+  "preventive_measures": [
+    "Perform weekly orchard scouting during early season.",
+    "Avoid prolonged leaf wetness by spacing and pruning.",
+    "Maintain sanitation of pruned material and tools."
+  ]
 }
 ```
-
----
-
-## Validation & Safety
-
-### **Prompt Injection Prevention**
-- User photos only → no text input that could manipulate prompt
-- Disease/crop labels come from CNN → not user-typed
-
-### **Output Validation**
-- Parse LLM response for dangerous chemicals
-- Flag if recommendation includes non-approved pesticides
-- Cross-check against local regulations
-
-### **Confidence Gate**
-- If model confidence < 60% → LLM still generates advice BUT flags with "⚠️ Low confidence"
-- Farmer sees: "This prediction is uncertain — please verify with field inspection"
-
----
-
-## Temperature & Sampling
-
-**Settings Used:**
-```python
-temperature = 0.3  # Low = factual, consistent
-top_p = 0.9        # Nucleus sampling for diversity
-max_tokens = 256   # Keep advice concise
-```
-
-**Rationale:**
-- Agriculture needs **factual**, not creative responses
-- Farmers rely on consistency across multiple scans
-- 256 tokens = ~150 words = human-readable on mobile
-
----
-
-## Iteration & Refinement
-
-**Current Version: v1.0**
-
-**Tested on:**
-- ✅ Tomato diseases (Early Blight, Yellow Leaf Curl)
-- ✅ Apple diseases (Scab, Powdery Mildew)
-- ✅ Grape diseases (Black Measles, Powdery Mildew)
-
-**Future improvements:**
-- Add weather API fetch (real humidity, rainfall forecast)
-- Regional pesticide regulations filter
-- Multi-language support (regional languages)
-
----
-
-## For Hackathon Judges
-
-**Key Achievements:**
-
-1. ✅ **Context-aware**: Recommendations change based on location + month
-2. ✅ **Fallback strategy**: Works even if LLM unavailable (KB-only mode)
-3. ✅ **Safety-first**: Low temperature prevents dangerous suggestions
-4. ✅ **Validated**: Tested on 3 crops, 12+ disease variants
-5. ✅ **Transparent**: Always show `source` (LLM vs. KB) to farmers
-
-**Live Demo Talking Points:**
-
-> "When a farmer detects a disease in our system, they get TWO layers of intelligence:
-> First, the CNN tells us WHAT disease it is (92% confidence, for example).
-> Then, the LLM tells them WHAT TO DO ABOUT IT — specific to their region and time of year.
-> The knowledge base ensures we ALWAYS have safe advice, even if Groq is down."
-
----
-
-**Contact:** Generated for AgriVision AI Hackathon 2026

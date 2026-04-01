@@ -5,7 +5,9 @@
 
 ## Executive Summary
 
-The AgriVision CNN model achieves **Macro F1 = 0.84** across disease classification tasks, demonstrating strong real-world performance with actionable insights into failure modes.
+The AgriVision CNN model achieves **Macro F1 = 0.84** in the repository's reference/sample evaluation report, demonstrating strong real-world performance with actionable insights into failure modes.
+
+**Note:** This document reflects the reference/sample evaluation package in the repository. The latest training logs present in `training/` do not show a newer higher-scoring verified run, so regenerate this report against the current checkpoint before claiming improved metrics.
 
 **Key Finding:** Model excels at identifying **healthy leaves** (recall 0.95) and **common diseases** (Early Blight F1=0.85), but struggles with **visually similar disease variants** (Apple Scab F1=0.76).
 
@@ -17,9 +19,9 @@ The AgriVision CNN model achieves **Macro F1 = 0.84** across disease classificat
 
 | Metric | Value | Interpretation |
 |--------|-------|---|
-| **Macro F1** | **0.84** | Primary metric across ~24 disease classes |
-| Weighted F1 | 0.85 | Accounts for class imbalance in dataset |
-| Overall Accuracy | 0.85 | 85% of predictions are correct |
+| **Macro F1** | **0.84** | Reference/sample metric from `backend/evaluate_model.py` |
+| Weighted F1 | 0.85 | Reference/sample metric from `backend/evaluate_model.py` |
+| Overall Accuracy | 0.85 | Reference/sample metric from `backend/evaluate_model.py` |
 | Total Test Samples | 25* | Validation set size |
 | Correctly Classified | 21 | True positives |
 | Misclassified | 4 | False positives/negatives |

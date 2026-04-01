@@ -252,6 +252,15 @@ def _call_groq_api(
         
         advice = json.loads(response_text)
         advice["source"] = "llm"
+
+        # Normalize optional fields so downstream validation is deterministic.
+        advice.setdefault("warnings", [])
+        advice.setdefault("notes", [])
+        advice.setdefault("organic_treatment", [])
+        advice.setdefault("chemical_treatment", [])
+        advice.setdefault("preventive_measures", [])
+        advice.setdefault("summary", "")
+        advice.setdefault("recovery_time", "Unknown")
         
         return advice
     

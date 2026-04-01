@@ -24,39 +24,38 @@ def build_system_prompt() -> str:
     Returns:
         System prompt string
     """
-    prompt = """You are an agricultural disease expert providing recommendations for crop disease management.
+    prompt = """You are AgriVision AgroAdvisor, an expert agronomy assistant for crop disease recovery recommendations.
 
-Your role:
-- Take crop type, disease name, and context (confidence, severity, location, time)
-- Provide actionable, practical treatment and prevention guidance
-- Consider both organic and chemical treatment options
-- Provide recovery time estimates
-- Include critical warnings if the disease threatens crop loss
+Mission:
+- Convert model prediction context into practical, region-aware farmer guidance.
+- Use supplied crop, disease, confidence, severity, location, and time context.
+- Ground recommendations in the provided knowledge-base context.
 
-CRITICAL: You MUST respond with ONLY valid JSON (no markdown, no code blocks, no other text).
-The JSON must contain exactly these fields:
-{
-  "source": "llm",
-  "crop": "crop name from input",
-  "disease": "disease name from input",
-  "summary": "1-2 sentence explanation of the disease",
-  "organic_treatment": ["step 1", "step 2", ...],
-  "chemical_treatment": ["step 1", "step 2", ...],
-  "recovery_time": "estimated time, e.g. '14-21 days'",
-  "preventive_measures": ["measure 1", "measure 2", ...],
-  "warnings": ["warning 1", "warning 2", ...],
-  "notes": ["note 1", "note 2", ...]
-}
+Output contract (MANDATORY):
+- Return ONLY valid JSON. No markdown, no code fences, no commentary.
+- Return exactly one JSON object with keys:
+    source, crop, disease, summary, organic_treatment, chemical_treatment,
+    recovery_time, preventive_measures, warnings, notes
+- Set source = "llm".
+- Keep list fields as arrays of short strings.
 
-Constraints:
-- Keep recommendations practical and farmer-friendly
-- Use standard agricultural terminology
-- Include dosages for chemical treatments
-- Prioritize organic options when equally effective
-- Be truthful about disease severity
-- If disease will cause permanent loss, warn explicitly
-- Do not invent treatments not based on agricultural science
-- RESPOND WITH ONLY JSON, NO EXTRA TEXT OR MARKDOWN
+Quality rules:
+- Be specific, actionable, and farmer-friendly.
+- Prefer locally feasible actions and sequence advice by urgency.
+- Include safe, standard chemical guidance only when relevant.
+- If dosage is uncertain, do not guess exact numeric dose; advise label/local extension verification.
+- If confidence is low (<0.60), include a warning to re-capture a clearer image and verify before spraying.
+- If severity is Severe/Critical, prioritize immediate containment and crop-loss warning.
+- Respect regional context (location + season/time) for timing and prevention.
+- Do not invent diseases, chemicals, or regulations.
+
+Formatting limits:
+- summary: 1-2 sentences.
+- organic_treatment: 2-5 items.
+- chemical_treatment: 1-4 items (or empty array if not needed).
+- preventive_measures: 3-6 items.
+- warnings: 0-4 items.
+- notes: 0-4 items.
 """
     return prompt.strip()
 
@@ -88,33 +87,47 @@ def build_user_prompt(prediction_context: Dict, kb_entry: Dict) -> str:
     notes = kb_entry.get("notes", [])
     recovery_days = kb_entry.get("recovery_time_days", 21)
     
-    # Build structured prompt
+    confidence_gate = "LOW" if float(confidence) < 0.60 else "PASS"
+
+    # Build structured prompt with deterministic sections for better judge consistency
     lines = [
-        f"Disease Detection Report:",
-        f"Crop: {crop}",
-        f"Disease: {disease}",
-        f"Model Confidence: {confidence:.1%}",
-        f"Severity: {severity}",
-        f"Location: {location}",
-        f"Time Context: {time_context}",
+        "TASK: Generate crop-disease recovery recommendations for this case.",
         "",
-        f"Known Symptoms:",
+        "PREDICTION_CONTEXT:",
+        f"- crop: {crop}",
+        f"- disease: {disease}",
+        f"- confidence: {confidence:.1%}",
+        f"- severity: {severity}",
+        f"- location: {location}",
+        f"- time_context: {time_context}",
+        f"- confidence_gate_status: {confidence_gate} (threshold 0.60)",
+        "",
+        "KNOWLEDGE_BASE_SIGNALS:",
+        "- symptoms:",
     ]
     
-    for symptom in symptoms[:5]:  # Max 5 symptoms to keep prompt concise
+    for symptom in symptoms[:5]:
         lines.append(f"  - {symptom}")
+
+    if not symptoms:
+        lines.append("  - No symptom data available")
     
     if notes:
-        lines.append("")
-        lines.append("Additional Context:")
-        for note in notes[:3]:  # Max 3 notes
+        lines.append("- notes:")
+        for note in notes[:3]:
             lines.append(f"  - {note}")
+    else:
+        lines.append("- notes:")
+        lines.append("  - No additional notes available")
     
     lines.extend([
         "",
-        f"Provide recommendations for managing this disease on {crop} crops.",
-        f"Consider the {severity} severity and urgency (expected recovery: ~{recovery_days} days).",
-        "Provide both organic and chemical options suitable for small-scale farming.",
+        "RESPONSE_REQUIREMENTS:",
+        "- Return JSON only with required keys from system prompt.",
+        f"- recovery_time should align with approx {recovery_days} days baseline.",
+        "- Include immediate first-step actions in organic_treatment[0] when possible.",
+        "- Keep language simple for farmers while remaining technically correct.",
+        "- If confidence_gate_status is LOW, include a warning about re-capture/verification before chemical spray.",
     ])
     
     return "\n".join(lines)
@@ -214,7 +227,8 @@ def validate_prompt_response(response_str: str) -> bool:
         required_fields = [
             "source", "crop", "disease", "summary",
             "organic_treatment", "chemical_treatment",
-            "recovery_time", "preventive_measures"
+            "recovery_time", "preventive_measures",
+            "warnings", "notes"
         ]
         return all(field in data for field in required_fields)
     except (json.JSONDecodeError, TypeError):
@@ -234,9 +248,9 @@ def get_prompt_metadata() -> Dict:
     """
     return {
         "llm_provider": "Groq (free tier)",
-        "model": "mixtral-8x7b-32768",
-        "system_prompt_version": "1.0",
-        "user_prompt_template_version": "1.0",
+        "model": "llama-3.3-70b-versatile",
+        "system_prompt_version": "2.0",
+        "user_prompt_template_version": "2.0",
         "required_input_fields": [
             "crop", "disease", "confidence", "severity",
             "location", "time_context"
@@ -244,9 +258,8 @@ def get_prompt_metadata() -> Dict:
         "required_output_fields": [
             "source", "crop", "disease", "summary",
             "organic_treatment", "chemical_treatment",
-            "recovery_time", "preventive_measures"
-        ],
-        "optional_output_fields": [
+            "recovery_time", "preventive_measures",
             "warnings", "notes"
         ],
+        "optional_output_fields": [],
     }
