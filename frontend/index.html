@@ -1065,6 +1065,72 @@
             letter-spacing: 0.2em;
             text-transform: uppercase;
         }
+
+        .analysis-actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .analyze-btn {
+            border: 1px solid var(--chloro);
+            background: rgba(74, 222, 128, 0.1);
+            color: var(--mist);
+            padding: 12px 20px;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .analysis-status {
+            margin-top: 16px;
+            min-height: 22px;
+            font-size: 13px;
+            color: var(--mist);
+            opacity: 0.85;
+        }
+
+        .analysis-status.error {
+            color: #ff8f7a;
+        }
+
+        .analysis-card {
+            margin-top: 20px;
+            width: min(820px, 92vw);
+            border: 1px solid rgba(74, 222, 128, 0.25);
+            background: rgba(12, 10, 5, 0.75);
+            backdrop-filter: blur(10px);
+            padding: 18px;
+            text-align: left;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 18px;
+            font-size: 13px;
+        }
+
+        .analysis-grid strong {
+            color: var(--chloro);
+        }
+
+        .cam-preview {
+            margin-top: 12px;
+            width: 100%;
+            max-height: 320px;
+            object-fit: contain;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            display: none;
+        }
         
         /* ═══════════════════════════════════════════════════════════════════ */
         /* ANIMATIONS & SCROLL REVEALS */
@@ -1413,9 +1479,25 @@
             <div class="cta-line-2">START KNOWING.</div>
         </h2>
         <p class="cta-subtext">Tomato. Apple. Grape. Upload a leaf. Diagnosis in under 3 seconds.</p>
-        <div class="upload-zone">
+        <input id="leafInput" type="file" accept="image/*" hidden>
+        <div class="upload-zone" id="uploadZone">
             <div class="upload-icon">🌿</div>
-            <div class="upload-text">DROP LEAF IMAGE HERE</div>
+            <div class="upload-text" id="uploadText">DROP LEAF IMAGE HERE</div>
+        </div>
+        <div class="analysis-actions">
+            <button id="analyzeBtn" class="analyze-btn" type="button">Run Diagnosis</button>
+        </div>
+        <div id="analysisStatus" class="analysis-status"></div>
+        <div id="analysisCard" class="analysis-card" style="display:none;">
+            <div class="analysis-grid">
+                <div><strong>Crop:</strong> <span id="resultCrop">-</span></div>
+                <div><strong>Disease:</strong> <span id="resultDisease">-</span></div>
+                <div><strong>Confidence:</strong> <span id="resultConfidence">-</span></div>
+                <div><strong>Severity:</strong> <span id="resultSeverity">-</span></div>
+                <div><strong>Blur Score:</strong> <span id="resultBlur">-</span></div>
+                <div><strong>Location:</strong> <span id="resultLocation">-</span></div>
+            </div>
+            <img id="camPreview" class="cam-preview" alt="Grad-CAM preview">
         </div>
     </section>
     
@@ -1549,6 +1631,113 @@
             rootMargin: '0px 0px -100px 0px'
         };
         
+
+        // ═══════════════════════════════════════════════════════════════════
+        // LIVE PREDICTION (CTA UPLOAD -> BACKEND /predict)
+        // ═══════════════════════════════════════════════════════════════════
+
+        const API_BASE = 'http://127.0.0.1:8000';
+        const uploadZone = document.getElementById('uploadZone');
+        const uploadText = document.getElementById('uploadText');
+        const leafInput = document.getElementById('leafInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const analysisStatus = document.getElementById('analysisStatus');
+        const analysisCard = document.getElementById('analysisCard');
+        const camPreview = document.getElementById('camPreview');
+        let selectedFile = null;
+
+        function setStatus(message, isError = false) {
+            if (!analysisStatus) return;
+            analysisStatus.textContent = message;
+            analysisStatus.classList.toggle('error', Boolean(isError));
+        }
+
+        function setSelectedFile(file) {
+            selectedFile = file || null;
+            if (!uploadText) return;
+            if (selectedFile) {
+                uploadText.textContent = `FILE READY: ${selectedFile.name}`;
+            } else {
+                uploadText.textContent = 'DROP LEAF IMAGE HERE';
+            }
+        }
+
+        async function runPredict() {
+            if (!selectedFile) {
+                setStatus('Please choose an image first.', true);
+                return;
+            }
+
+            analyzeBtn.disabled = true;
+            setStatus('Analyzing image...');
+            analysisCard.style.display = 'none';
+
+            const form = new FormData();
+            form.append('image', selectedFile);
+
+            try {
+                const resp = await fetch(`${API_BASE}/predict`, {
+                    method: 'POST',
+                    body: form,
+                });
+
+                let payload = null;
+                try {
+                    payload = await resp.json();
+                } catch (_) {
+                    payload = null;
+                }
+
+                if (!resp.ok) {
+                    const detail = payload?.detail || `Request failed (${resp.status}).`;
+                    throw new Error(detail);
+                }
+
+                document.getElementById('resultCrop').textContent = payload.crop || '-';
+                document.getElementById('resultDisease').textContent = payload.disease || '-';
+                document.getElementById('resultConfidence').textContent = `${payload.confidence ?? '-'}%`;
+                document.getElementById('resultSeverity').textContent = `${payload.severity_label ?? '-'} (${payload.severity_score ?? '-'})`;
+                document.getElementById('resultBlur').textContent = payload.blur_score ?? '-';
+                document.getElementById('resultLocation').textContent = payload.location || '-';
+
+                if (payload.cam_image) {
+                    camPreview.src = payload.cam_image;
+                    camPreview.style.display = 'block';
+                } else {
+                    camPreview.removeAttribute('src');
+                    camPreview.style.display = 'none';
+                }
+
+                analysisCard.style.display = 'block';
+                setStatus('Diagnosis complete.');
+            } catch (err) {
+                setStatus(err?.message || 'Prediction failed.', true);
+            } finally {
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        if (uploadZone && leafInput) {
+            uploadZone.addEventListener('click', () => leafInput.click());
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.style.background = 'rgba(74, 222, 128, 0.1)';
+            });
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.style.background = '';
+            });
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.style.background = '';
+                const file = e.dataTransfer?.files?.[0];
+                if (file) setSelectedFile(file);
+            });
+            leafInput.addEventListener('change', () => setSelectedFile(leafInput.files?.[0]));
+        }
+
+        if (analyzeBtn) {
+            analyzeBtn.addEventListener('click', runPredict);
+        }
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
