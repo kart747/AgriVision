@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriVision — AI-Powered Crop Intelligence</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --soil:     #0c0a05;
+            --moss:     #1a2a12;
+            --chloro:   #4ade80;
+            --spore:    #a3e635;
+            --blight:   #ff4d2e;
+            --mist:     #d4f5c4;
+            --lab:      #e8f5e9;
+            --ease-smooth: cubic-bezier(0.25, 0.1, 0.0, 1.0);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background-color: var(--soil);
+            color: var(--mist);
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/></filter><rect width="100" height="100" fill="white"/><rect width="100" height="100" fill="black" filter="url(%23noise)" opacity="0.05"/></svg>');
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.025;
+        }
+        
+        h1, h2, h3 { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -0.02em; }
+        .label-caps { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.3em; text-transform: uppercase; font-size: 18px; }
+        
+        /* ════════════════════════════════════ NAVIGATION ════════════════════════════════════ */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(12, 10, 5, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(74, 222, 128, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+        }
+        
+        .nav-logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--chloro);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--mist);
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transition: color 0.3s var(--ease-smooth);
+            cursor: pointer;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--chloro);
+        }
+        
+        .btn-nav {
+            background: var(--chloro);
+            color: var(--soil);
+            padding: 10px 20px;
+            border: none;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s var(--ease-smooth);
+        }
+        
+        .btn-nav:hover {
+            background: var(--spore);
+            box-shadow: 0 0 20px rgba(163, 230, 53, 0.5);
+        }
+        
+        /* ════════════════════════════════════ HERO ════════════════════════════════════ */
+        .hero {
+            min-height: 100vh;
+            background: var(--soil);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding-top: 64px;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse 800px 600px at 20% 30%, rgba(74, 222, 128, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse 900px 700px at 80% 60%, rgba(163, 230, 53, 0.1) 0%, transparent 50%);
+            filter: blur(80px);
+            animation: blob-shift 15s infinite ease-in-out;
+            z-index: 0;
+        }
+        
+        @keyframes blob-shift {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -50px); }
+            100% { transform: translate(0, 0); }
+        }
+        
+        .hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            max-width: 800px;
+            padding: 0 48px;
+        }
+        
+        .hero-headline {
+            font-size: clamp(48px, 8vw, 96px);
+            color: var(--chloro);
+            margin-bottom: 24px;
+            line-height: 1;
+            text-shadow: 0 0 30px rgba(74, 222, 128, 0.3);
+        }
+        
+        .hero-subline {
+            font-size: 16px;
+            color: var(--mist);
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+        
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: var(--chloro);
+            color: var(--soil);
+            padding: 14px 32px;
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s var(--ease-smooth);
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+        }
+        
+        .btn-primary:hover {
+            background: var(--spore);
+            box-shadow: 0 0 40px rgba(163, 230, 53, 0.8);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--chloro);
+            border: 2px solid var(--chloro);
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s var(--ease-smooth);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--chloro);
+            color: var(--soil);
+            box-shadow: 0 0 30px rgba(74, 222, 128, 0.6);
+        }
+        
+        /* ════════════════════════════════════ SECTIONS ════════════════════════════════════ */
+        .section {
+            padding: 80px 48px;
+            background: var(--soil);
+            border-top: 1px solid rgba(74, 222, 128, 0.1);
+        }
+        
+        .section-title {
+            font-size: clamp(36px, 5vw, 64px);
+            color: var(--chloro);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: rgba(26, 42, 18, 0.5);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            padding: 32px;
+            transition: all 0.3s var(--ease-smooth);
+        }
+        
+        .feature-card:hover {
+            border-color: var(--chloro);
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+            transform: translateY(-4px);
+        }
+        
+        .feature-card h3 {
+            font-size: 18px;
+            color: var(--chloro);
+            margin-bottom: 12px;
+        }
+        
+        .feature-card p {
+            font-size: 13px;
+            color: var(--mist);
+            line-height: 1.6;
+        }
+        
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+        
+        /* ════════════════════════════════════ ANIMATIONS ════════════════════════════════════ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 0.7s var(--ease-smooth) forwards;
+        }
+        
+        @media (max-width: 768px) {
+            nav { padding: 0 24px; }
+            .hero { padding: 32px; }
+            .section { padding: 40px 24px; }
+            .hero-headline { font-size: 48px; }
+            .nav-links { gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navigation -->
+    <nav>
+        <a href="index.html" class="nav-logo">AGRI∇ISION</a>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#crops">Crops</a></li>
+            <li><a href="detect.html" class="btn-nav">Start Scanning →</a></li>
+        </ul>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <canvas class="hero-canvas"></canvas>
+        <div class="hero-content">
+            <h1 class="hero-headline">THE FIELD SEES BACK</h1>
+            <p class="hero-subline">AI-Powered Crop Disease Detection & Intelligence Platform</p>
+            <div class="hero-cta">
+                <a href="detect.html" class="btn-primary">Scan Your Crop →</a>
+                <a href="#how-it-works" class="btn-secondary">Learn More</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="section" id="features">
+        <h2 class="section-title">Capabilities</h2>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon">🔍</div>
+                <h3>Disease Detection</h3>
+                <p>Advanced CNN AI enables precise identification of 22+ crop diseases with >90% accuracy in seconds.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">💡</div>
+                <h3>Smart Recommendations</h3>
+                <p>Get instantly actionable treatment recommendations powered by LLM agronomist expertise.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">📊</div>
+                <h3>Damage Assessment</h3>
+                <p>Severity scoring shows exact damage percentage and affected areas for precision farming.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">🌍</div>
+                <h3>Location Aware</h3>
+                <p>GPS integration provides region-specific insights and local treatment options.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">📈</div>
+                <h3>Historical Reports</h3>
+                <p>Track crop health over time with detailed analytics and trend visualization.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">⚡</div>
+                <h3>Real-Time Processing</h3>
+                <p>Ultra-fast analysis with GPU acceleration—results in under 3 seconds.</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- How It Works Section -->
+    <section class="section" id="how-it-works">
+        <h2 class="section-title">How It Works</h2>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <h3>Step 1: Capture</h3>
+                <p>Use your phone to photograph an affected leaf or plant. Any angle, any lighting.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>Step 2: Upload</h3>
+                <p>Upload your image to our platform. Optional: add field coordinates and notes.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>Step 3: Analyze</h3>
+                <p>Our AI analyzes the image using trained EfficientNet CNN models for instant diagnosis.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>Step 4: Act</h3>
+                <p>Receive treatment recommendations, severity assessment, and preventive measures.</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Crops Section -->
+    <section class="section" id="crops">
+        <h2 class="section-title">Supported Crops</h2>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <h3>🍅 Tomato</h3>
+                <p>Early Blight, Leaf Mold, Septoria Leaf Spot, and 6 more diseases tracked with 91% avg confidence.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>🍎 Apple</h3>
+                <p>Apple Scab, Cedar Apple Rust, Powdery Mildew, and 4 more conditions identified with 89% accuracy.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>🍇 Grape</h3>
+                <p>Black Rot, Esca, Powdery Mildew, and 3 more grape diseases detected with 93% confidence.</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Spore Particle Animation -->
+    <script>
+        const canvas = document.querySelector('.hero-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        class Spore {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.radius = Math.random() * 3 + 1;
+                this.velocityY = Math.random() * 0.5 + 0.2;
+                this.velocityX = (Math.random() - 0.5) * 0.3;
+                this.opacity = Math.random() * 0.6 + 0.2;
+            }
+            
+            update() {
+                this.y -= this.velocityY;
+                this.x += this.velocityX;
+                this.opacity -= 0.003;
+            }
+            
+            draw() {
+                ctx.fillStyle = `rgba(74, 222, 128, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            isDead() {
+                return this.opacity <= 0 || this.y < -10;
+            }
+        }
+        
+        let spores = [];
+        
+        function initSpores() {
+            spores = [];
+            for (let i = 0; i < 80; i++) {
+                spores.push(new Spore());
+            }
+        }
+        
+        initSpores();
+        
+        function animateSpores() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (spores.length < 80 && Math.random() < 0.1) {
+                spores.push(new Spore());
+            }
+            
+            spores.forEach((spore, index) => {
+                spore.update();
+                spore.draw();
+                
+                if (spore.isDead()) {
+                    spores.splice(index, 1);
+                }
+            });
+            
+            requestAnimationFrame(animateSpores);
+        }
+        
+        animateSpores();
+        
+        // Scroll reveal animation
+        const observerOptions = {
+            threshold: 0.15,
+            rootMargin: '0px 0px -100px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    const delay = Array.from(entry.target.parentNode.children).indexOf(entry.target);
+                    entry.target.style.animationDelay = `${delay * 0.1}s`;
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
