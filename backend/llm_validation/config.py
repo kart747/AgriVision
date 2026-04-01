@@ -5,7 +5,14 @@ This module centralized all thresholds, API settings, and crop/disease mappings.
 """
 
 import os
+from pathlib import Path
 from typing import Dict, List
+
+from dotenv import load_dotenv
+
+# Load backend/.env for local development so GROQ_API_KEY is available.
+ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(ENV_FILE)
 
 # ============================================================================
 # VALIDATION THRESHOLDS
