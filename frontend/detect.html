@@ -6,6 +6,7 @@
     <title>AgriVision — Crop Disease Detection</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/piexifjs@0.0.7/piexif.min.js"></script>
     
     <style>
         :root {
@@ -631,14 +632,68 @@
         
         function handleFileSelect(file) {
             selectedFile = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
+            
+            // Extract EXIF GPS data if available
+            const exifReader = new FileReader();
+            exifReader.onload = (e) => {
+                try {
+                    if (typeof piexif !== 'undefined') {
+                        const exifData = piexif.load(e.target.result);
+                        const gps = exifData['GPS'] || {};
+                        
+                        if (gps[piexif.GPSIFD.GPSLatitude] && gps[piexif.GPSIFD.GPSLongitude]) {
+                            const lat = convertDMSToDecimal(gps[piexif.GPSIFD.GPSLatitude], gps[piexif.GPSIFD.GPSLatitudeRef]);
+                            const lng = convertDMSToDecimal(gps[piexif.GPSIFD.GPSLongitude], gps[piexif.GPSIFD.GPSLongitudeRef]);
+                            
+                            document.getElementById('latitude').value = lat.toFixed(6);
+                            document.getElementById('longitude').value = lng.toFixed(6);
+                            
+                            // Show auto-detection notification
+                            const existingMsg = document.querySelector('.gps-autofill-msg');
+                            if (existingMsg) existingMsg.remove();
+                            
+                            const msg = document.createElement('div');
+                            msg.className = 'gps-autofill-msg';
+                            msg.style.cssText = `
+                                background: rgba(74, 222, 128, 0.15);
+                                border-left: 3px solid rgba(74, 222, 128, 0.6);
+                                color: var(--chloro);
+                                padding: 8px 12px;
+                                margin-top: 8px;
+                                font-size: 11px;
+                                border-radius: 2px;
+                            `;
+                            msg.innerHTML = '✓ GPS coordinates auto-detected from image metadata';
+                            document.querySelector('.form-section:nth-child(4)').appendChild(msg);
+                        }
+                    }
+                } catch (exifErr) {
+                    console.log('No EXIF GPS data found or unable to parse');
+                }
+            };
+            exifReader.readAsArrayBuffer(file);
+            
+            // Preview image
+            const dataReader = new FileReader();
+            dataReader.onload = (e) => {
                 uploadPreview.src = e.target.result;
                 uploadPreview.classList.add('visible');
                 uploadZone.style.opacity = '0.5';
                 analyzeBtn.disabled = !selectedFile;
             };
-            reader.readAsDataURL(file);
+            dataReader.readAsDataURL(file);
+        }
+        
+        function convertDMSToDecimal(dms, ref) {
+            const degrees = dms[0][0] / dms[0][1];
+            const minutes = dms[1][0] / dms[1][1] / 60;
+            const seconds = dms[2][0] / dms[2][1] / 3600;
+            
+            let result = degrees + minutes + seconds;
+            if (ref === 'S' || ref === 'W') {
+                result = -result;
+            }
+            return result;
         }
         
         cropSelect.addEventListener('change', () => {
@@ -648,12 +703,29 @@
         /* ════════════════════════════════════ ANALYSIS ════════════════════════════════════ */
         async function analyzeImage() {
             const crop = cropSelect.value;
-            const lat = document.getElementById('latitude').value;
-            const lng = document.getElementById('longitude').value;
+            const latStr = document.getElementById('latitude').value.trim();
+            const lngStr = document.getElementById('longitude').value.trim();
             
             if (!selectedFile) {
                 alert('Please upload an image');
                 return;
+            }
+            
+            // Validate GPS coordinates format if provided
+            let lat = null, lng = null;
+            if (latStr) {
+                lat = parseFloat(latStr);
+                if (isNaN(lat) || lat < -90 || lat > 90) {
+                    alert('Invalid latitude. Must be between -90 and 90');
+                    return;
+                }
+            }
+            if (lngStr) {
+                lng = parseFloat(lngStr);
+                if (isNaN(lng) || lng < -180 || lng > 180) {
+                    alert('Invalid longitude. Must be between -180 and 180');
+                    return;
+                }
             }
             
             analyzeBtn.disabled = true;
@@ -663,8 +735,8 @@
                 const formData = new FormData();
                 formData.append('image', selectedFile);
                 if (cropHint) formData.append('crop_hint', cropHint);
-                if (lat) formData.append('latitude', lat);
-                if (lng) formData.append('longitude', lng);
+                if (lat !== null) formData.append('latitude', lat);
+                if (lng !== null) formData.append('longitude', lng);
                 return formData;
             };
 
@@ -957,6 +1029,10 @@
             document.getElementById('longitude').value = '';
             document.getElementById('notes').value = '';
             analyzeBtn.disabled = true;
+            
+            // Remove GPS auto-detection message
+            const existingMsg = document.querySelector('.gps-autofill-msg');
+            if (existingMsg) existingMsg.remove();
         }
         
         /* ════════════════════════════════════ ENABLE BUTTON ════════════════════════════════════ */
