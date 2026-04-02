@@ -103,7 +103,7 @@
 <div class="flex items-center gap-6">
 <nav class="hidden md:flex gap-6 items-center">
 <a class="text-[#6bfb9a] border-b-2 border-[#6bfb9a] pb-1 font-['Space_Grotesk'] tracking-wider uppercase text-xs" href="detect.html">DIAGNOSTICS</a>
-<a class="text-[#bccabb] hover:text-[#6bfb9a] transition-colors font-['Space_Grotesk'] tracking-wider uppercase text-xs" href="detect.html">BIO_METRICS</a>
+<a class="text-[#bccabb] hover:text-[#6bfb9a] transition-colors font-['Space_Grotesk'] tracking-wider uppercase text-xs" href="model.html">PERFORMANCE</a>
 <a class="text-[#bccabb] hover:text-[#6bfb9a] transition-colors font-['Space_Grotesk'] tracking-wider uppercase text-xs" href="index.html">BACK_HOME</a>
 </nav>
 <div class="flex items-center gap-4">
@@ -149,9 +149,14 @@
 </div>
 </section>
 <!-- Left Column: Inputs -->
-<div class="col-span-12 lg:col-span-5 flex flex-col gap-6">
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-6 lg:self-start">
+<!-- Mode Tabs -->
+<div class="bg-surface-container-low p-4 flex gap-2 flex-shrink-0">
+<button id="modeSingle" class="flex-1 py-2 px-4 bg-primary text-on-primary font-label text-xs uppercase tracking-wider" onclick="switchMode('single')">Single Scan</button>
+<button id="modeDrone" class="flex-1 py-2 px-4 bg-surface-container-high text-on-surface-variant font-label text-xs uppercase tracking-wider hover:bg-primary/20" onclick="switchMode('drone')">Drone/Batch</button>
+</div>
 <!-- Upload Module -->
-<div class="bg-surface-container-low p-8 relative overflow-hidden group">
+<div id="singleModePanel" class="bg-surface-container-low p-8 relative overflow-hidden group">
 <div class="absolute top-0 left-0 w-full h-0.5 bg-primary/30"></div>
 <h2 class="font-headline text-lg font-bold uppercase mb-6 flex items-center gap-2">
 <span class="material-symbols-outlined text-primary" data-icon="center_focus_strong">center_focus_strong</span>
@@ -224,6 +229,31 @@
                     </button>
 </div>
 </div>
+<!-- Drone/Batch Upload Panel -->
+<div id="droneModePanel" class="hidden bg-surface-container-low p-8 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-0.5 bg-secondary/30"></div>
+<h2 class="font-headline text-lg font-bold uppercase mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="cloud_upload">cloud_upload</span>
+                    Batch_Acquisition
+                </h2>
+<div class="border-2 border-dashed border-secondary/50 hover:border-secondary transition-all p-12 text-center relative group cursor-pointer" id="droneUploadZone">
+<div class="space-y-4">
+<span class="material-symbols-outlined text-5xl text-secondary-fixed-dim" data-icon="folder_open">folder_open</span>
+<p class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">Select multiple leaf images</p>
+<p class="font-label text-[8px] text-secondary/40 uppercase">JPEG, PNG // MAX 10 IMAGES</p>
+</div>
+<input accept="image/*" class="hidden" id="droneInput" type="file" multiple />
+<div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-secondary"></div>
+<div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-secondary"></div>
+<div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-secondary"></div>
+<div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-secondary"></div>
+</div>
+<div id="droneFileList" class="mt-4 space-y-2"></div>
+<button id="droneScanBtn" class="w-full mt-6 bg-secondary text-on-secondary-container py-4 font-headline font-extrabold tracking-widest text-sm hover:brightness-110 transition-all flex justify-center items-center gap-3" onclick="runDroneScan()">
+<span class="material-symbols-outlined" data-icon="flight_takeoff">flight_takeoff</span>
+                        RUN_BATCH_SCAN
+                    </button>
+</div>
 </div>
 <!-- Right Column: Terminal Output -->
 <div class="col-span-12 lg:col-span-7 flex flex-col h-full">
@@ -242,6 +272,136 @@
     const API_BASE = 'http://127.0.0.1:8000';
     let currentImage = null;
     let currentImageFile = null;
+    let droneFiles = [];
+
+    // Mode Switching
+    function switchMode(mode) {
+        const singleBtn = document.getElementById('modeSingle');
+        const droneBtn = document.getElementById('modeDrone');
+        const singlePanel = document.getElementById('singleModePanel');
+        const dronePanel = document.getElementById('droneModePanel');
+        
+        if (mode === 'single') {
+            singleBtn.className = 'flex-1 py-2 px-4 bg-primary text-on-primary font-label text-xs uppercase tracking-wider';
+            droneBtn.className = 'flex-1 py-2 px-4 bg-surface-container-high text-on-surface-variant font-label text-xs uppercase tracking-wider hover:bg-primary/20';
+            singlePanel.classList.remove('hidden');
+            dronePanel.classList.add('hidden');
+        } else {
+            singleBtn.className = 'flex-1 py-2 px-4 bg-surface-container-high text-on-surface-variant font-label text-xs uppercase tracking-wider hover:bg-primary/20';
+            droneBtn.className = 'flex-1 py-2 px-4 bg-secondary text-on-secondary-container font-label text-xs uppercase tracking-wider';
+            singlePanel.classList.add('hidden');
+            dronePanel.classList.remove('hidden');
+        }
+    }
+
+    // Drone Mode Setup
+    const droneUploadZone = document.getElementById('droneUploadZone');
+    const droneInput = document.getElementById('droneInput');
+    const droneFileList = document.getElementById('droneFileList');
+    const droneScanBtn = document.getElementById('droneScanBtn');
+
+    if (droneUploadZone) {
+        droneUploadZone.addEventListener('click', () => droneInput.click());
+        droneUploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            droneUploadZone.style.borderColor = '#9ddf2e';
+            droneUploadZone.style.background = 'rgba(157, 223, 46, 0.1)';
+        });
+        droneUploadZone.addEventListener('dragleave', () => {
+            droneUploadZone.style.borderColor = '';
+            droneUploadZone.style.background = '';
+        });
+        droneUploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            droneUploadZone.style.borderColor = '';
+            droneUploadZone.style.background = '';
+            if (e.dataTransfer.files.length) {
+                handleDroneFiles(e.dataTransfer.files);
+            }
+        });
+    }
+
+    if (droneInput) {
+        droneInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleDroneFiles(e.target.files);
+            }
+        });
+    }
+
+    function handleDroneFiles(files) {
+        droneFiles = Array.from(files).slice(0, 10);
+        droneFileList.innerHTML = droneFiles.map((f, i) => `
+            <div class="flex items-center justify-between bg-surface-container-high p-2 text-xs">
+                <span class="truncate">${f.name}</span>
+                <button onclick="removeDroneFile(${i})" class="text-error hover:text-error/70">✕</button>
+            </div>
+        `).join('');
+        logTerminal(`[${getTime()}] <span class="text-secondary">BATCH:</span> ${droneFiles.length} images loaded`);
+    }
+
+    function removeDroneFile(index) {
+        droneFiles.splice(index, 1);
+        droneFileList.innerHTML = droneFiles.map((f, i) => `
+            <div class="flex items-center justify-between bg-surface-container-high p-2 text-xs">
+                <span class="truncate">${f.name}</span>
+                <button onclick="removeDroneFile(${i})" class="text-error hover:text-error/70">✕</button>
+            </div>
+        `).join('');
+    }
+
+    async function runDroneScan() {
+        if (droneFiles.length === 0) {
+            alert('Please select at least one image');
+            return;
+        }
+
+        droneScanBtn.disabled = true;
+        droneScanBtn.innerHTML = '<span class="material-symbols-outlined animate-spin" data-icon="sync">sync</span> SCANNING...';
+
+        logTerminal(`[${getTime()}] <span class="text-secondary">BATCH_INIT:</span> Processing ${droneFiles.length} images...`);
+
+        const formData = new FormData();
+        droneFiles.forEach(file => formData.append('images', file));
+
+        try {
+            const response = await fetch(`${API_BASE}/drone-scan`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+            const data = await response.json();
+            displayDroneResults(data);
+
+        } catch (error) {
+            logTerminal(`[${getTime()}] <span class="text-error">ERROR:</span> ${error.message}`);
+            alert('Error running batch scan: ' + error.message);
+        } finally {
+            droneScanBtn.disabled = false;
+            droneScanBtn.innerHTML = '<span class="material-symbols-outlined" data-icon="flight_takeoff">flight_takeoff</span> RUN_BATCH_SCAN';
+        }
+    }
+
+    function displayDroneResults(data) {
+        const total = data.total_images || 0;
+        const infected = data.infected_count || 0;
+        const healthy = total - infected;
+        const rate = total > 0 ? ((infected / total) * 100).toFixed(1) : 0;
+
+        logTerminal(`[${getTime()}] <span class="text-secondary">BATCH_COMPLETE:</span> ${total} images processed`);
+        logTerminal(`[${getTime()}] <span class="text-primary">INFECTION_RATE:</span> ${rate}% (${infected}/${total} infected)`);
+
+        if (data.results && data.results.length > 0) {
+            data.results.forEach((r, i) => {
+                const status = r.is_healthy ? 'HEALTHY' : 'INFECTED';
+                const conf = r.confidence ? (r.confidence * 100).toFixed(1) : 0;
+                const colorClass = r.is_healthy ? 'text-primary' : 'text-error';
+                logTerminal(`[${getTime()}] <span class="${colorClass}">${status}:</span> ${r.disease || 'N/A'} (${conf}%) - ${r.crop || 'Unknown'}`);
+            });
+        }
+    }
     
     // Upload Zone Setup
     const uploadZone = document.getElementById('uploadZone');
@@ -327,7 +487,12 @@
     }
     
     function logTerminal(message) {
-        // Terminal logging disabled: report-only UI mode.
+        const contentDiv = resultsPanel.querySelector('.p-6');
+        if (!contentDiv) return;
+        const logEntry = document.createElement('div');
+        logEntry.className = 'flex gap-4 items-start border-l border-primary/20 pl-4 py-2';
+        logEntry.innerHTML = `<span class="text-primary-fixed-dim">[${getTime()}]</span><p>${message}</p>`;
+        contentDiv.appendChild(logEntry);
     }
     
     function displayResults(data) {
