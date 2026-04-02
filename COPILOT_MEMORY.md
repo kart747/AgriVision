@@ -355,6 +355,8 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Owns pipeline correctness, endpoint stability, deployment and testing scripts.
 - Files: backend/main.py, backend/model/*, backend/utils/*, backend/test_api.py, backend/run.sh, training/*.
 
+- 2026-04-02: Confidence gate raised back to 75% (from 50%) across predictor/API/frontend to reduce hallucinated low-confidence guesses and enforce safer field failure behavior.
+
 - Dependencies:
 - Frontend depends on stable API contract and model availability.
 - LLM quality depends on predictor confidence and severity score.
