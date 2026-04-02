@@ -85,7 +85,7 @@ if blur_score < BLUR_THRESHOLD:
 4. Show processing spinner
 
 **Say:**
-> "This is an EfficientNet B0 model — a state-of-the-art CNN pre-trained on ImageNet, then fine-tuned on 40,000+ leaf images from the PlantVillage dataset.
+> "This is an EfficientNet B0 model — a state-of-the-art CNN pre-trained on ImageNet, then fine-tuned on PlantVillage + PlantDoc datasets.
 > 
 > We chose EfficientNet because:
 > • Computationally efficient — runs on a laptop without GPU
@@ -93,14 +93,15 @@ if blur_score < BLUR_THRESHOLD:
 > • Fast inference (< 1 second per image)
 > 
 > The model produces:
-> 1. Disease classification (which of 26 disease classes?)
+> 1. Disease classification (which of 14 disease classes?)
 > 2. Confidence score (0-100%)
 > 3. Severity level (Low/Moderate/High)
 > 4. Grad-CAM heatmap (explainability — shows WHERE in the leaf it detected disease)"
 
 **Behind the scenes:**
-- Model weights: `backend/model/weights/best_model.pth` (85 MB, loaded in ~2 seconds)
-- Classes: 26 disease classes across Tomato/Apple/Grape + healthy variants
+- Model weights: `backend/model/weights/best_model.pth` (loaded in ~2 seconds)
+- Classes: 14 disease classes across Tomato/Apple/Grape + healthy variants
+- Training: Combined PlantVillage + PlantDoc dataset
 
 ---
 
@@ -252,20 +253,19 @@ if blur_score < BLUR_THRESHOLD:
 ### Q: "How accurate is the model?"
 
 **A:** 
-> "The model achieves macro F1 score of 0.84 across all disease classes.
-> That's 84% accuracy when averaging across classes (important for imbalanced data).
+> "The model achieves 94.65% accuracy on the test set with Macro F1 = 0.9196.
 > 
 > Per-class breakdown:
-> • Tomato Healthy: 93% (high, as expected)
-> • Tomato Early Blight: 85%
-> • Apple Scab: 76% (challenging disease, requires clear symptoms)
-> • Grape Black Measles: 81%
+> • Tomato Healthy: 98.3%
+> • Tomato Yellow Leaf Curl Virus: 99.1%
+> • Grape Healthy: 99.0%
+> • Apple Healthy: 97.2%
+> • Lower performing: Tomato Spider Mites (50% due to very few training samples)
 > 
-> We have a full evaluation report with confusion matrix available.
-> Plus, the 60% confidence gate means we REJECT predictions below that threshold,
+> The 60% confidence gate means we REJECT predictions below that threshold,
 > so what the farmer sees has higher practical accuracy."
 
-**Reference:** `evaluation_results/evaluation_summary.txt`
+**Reference:** `training/evaluation_results.json`
 
 ---
 
@@ -369,9 +369,9 @@ if blur_score < BLUR_THRESHOLD:
 | Issue | Fix |
 |-------|-----|
 | Backend not running | Run: `python -m uvicorn backend.main:app --port 8000` |
-| Model not loading | Check `model/weights/best_model.pth` exists (85 MB) |
+| Model not loading | Check `model/weights/best_model.pth` exists |
 | LLM slow/timeout | Groq might be rate-limited. Fallback to KB-only response. |
-| Image not uploading | Check file size (<10 MB), format (JPG/PNG) |
+| Image not uploading | Check file size (<10 MB), format (JPG/PNG/WebP) |
 | GPS not populating | Use sample GPS: 12.9352, 75.4030 (Mangalore) |
 
 ---

@@ -39,7 +39,7 @@ sequenceDiagram
         
         Note over User,LLM: Step 5: Model inference
         Backend->>Model: Forward pass (image_tensor)
-        Model-->>Backend: logits (17 classes)
+        Model-->>Backend: logits (14 classes)
         
         Note over User,LLM: Step 6: Post-processing
         Backend->>PostProc: Apply softmax

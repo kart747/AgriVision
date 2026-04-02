@@ -75,12 +75,12 @@ flowchart TB
     subgraph ML["🤖 ML Model Layer"]
         direction TB
         EfficientNet[EfficientNet-B0<br/>Fine-tuned Model]
-        DiseaseClasses[📋 17 Disease Classes]
+        DiseaseClasses[📋 14 Disease Classes]
         
         subgraph Classes["Disease Classes"]
             Tomato[🍅 Tomato<br/>9 diseases + healthy]
-            Apple[🍎 Apple<br/>3 diseases + healthy]
-            Grape[🍇 Grape<br/>3 diseases + healthy]
+            Apple[🍎 Apple<br/>2 diseases + healthy]
+            Grape[🍇 Grape<br/>1 disease + healthy]
         end
         
         subgraph Inference["🔍 Inference"]
@@ -164,11 +164,13 @@ flowchart TB
     subgraph Training["🎓 Training Pipeline"]
         direction TB
         PlantVillage[🌱 PlantVillage<br/>Dataset]
+        PlantDoc[📷 PlantDoc<br/>Dataset]
         DataAugmentation[🔄 Data Augmentation<br/>Flip/Rotate/ColorJitter]
-        TrainingScript[📝 train.py<br/>Training Script]
-        Evaluation[📊 Model Evaluation<br/>F1 Score: 98.6%]
+        TrainingScript[📝 train_unified.py<br/>Training Script]
+        Evaluation[📊 Model Evaluation<br/>Accuracy: 94.65%]
         
         PlantVillage --> DataAugmentation
+        PlantDoc --> DataAugmentation
         DataAugmentation --> TrainingScript
         TrainingScript --> Evaluation
         Evaluation --> model_weights
@@ -216,8 +218,8 @@ flowchart TB
 
 ### 🤖 ML Model Layer
 - **EfficientNet-B0**: Lightweight CNN, pre-trained on ImageNet
-- **17 Classes**: 9 Tomato + 4 Apple + 4 Grape diseases
-- **Training**: Fine-tuned on PlantVillage dataset (98.6% F1)
+- **14 Classes**: 3 Apple + 2 Grape + 9 Tomato diseases (including healthy)
+- **Training**: Fine-tuned on PlantVillage + PlantDoc dataset
 
 ### 📈 Post-Processing Layer
 - **Grad-CAM**: Visual heatmap showing disease-affected regions
@@ -237,16 +239,16 @@ flowchart TB
 
 ### 💾 Data Sources
 - `disease_knowledge.json`: Disease symptoms and treatments
-- `farm_regions.json`: Karnataka-specific farming regions
+- `farm_regions.json`: Regional farming data
 - `sample_cases.json`: Example prediction cases
-- `best_model.pth`: Trained model weights (16.4 MB)
-- `class_names.json`: 17 class labels
+- `best_model.pth`: Trained model weights
+- `class_names.json`: 14 class labels
 
 ### 🎓 Training Pipeline
-- **Dataset**: PlantVillage (25,020 images after filtering)
+- **Dataset**: PlantVillage + PlantDoc (~17,000 balanced images after merging)
 - **Augmentation**: Horizontal/Vertical flip, rotation, color jitter
-- **Training Script**: train.py with 5 frozen + 20 unfrozen epochs
-- **Evaluation**: 98.6% macro F1 score on test set
+- **Training Script**: train_unified.py with frozen + unfrozen epochs
+- **Evaluation**: 94.65% accuracy on test set
 
 ---
 
@@ -286,7 +288,7 @@ flowchart TB
 User Upload → Validation → Preprocess → ML Inference → Post-Processing
      ↓              ↓            ↓            ↓              ↓
    UploadFile   File Type   Resize 224   EfficientNet   Grad-CAM
-                Size Check  Normalize    17 Classes      Severity
+                Size Check  Normalize    14 Classes      Severity
                                               ↓
                                     Validation Module
                                               ↓
