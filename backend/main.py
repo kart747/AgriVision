@@ -117,7 +117,7 @@ class AdviceResponse(BaseModel):
 
 def _format_location(latitude: Optional[float], longitude: Optional[float]) -> str:
     if latitude is None or longitude is None:
-        return "Mangalore, Karnataka"
+        return "Location unavailable"
     return f"{latitude:.4f}, {longitude:.4f}"
 
 

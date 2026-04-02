@@ -228,50 +228,10 @@
 <!-- Right Column: Terminal Output -->
 <div class="col-span-12 lg:col-span-7 flex flex-col h-full">
 <div class="flex-1 bg-[#0c0a05] border border-primary/10 overflow-y-auto relative flex flex-col" id="resultsPanel">
-<!-- Terminal Header -->
-<div class="bg-surface-container-highest px-4 py-2 flex justify-between items-center border-b border-primary/20 sticky top-0 z-20">
-<div class="flex gap-2 items-center">
-<div class="w-2 h-2 rounded-full bg-error"></div>
-<div class="w-2 h-2 rounded-full bg-secondary"></div>
-<div class="w-2 h-2 rounded-full bg-primary"></div>
-<span class="font-label text-[10px] text-primary ml-4 tracking-tighter">DIAGNOSTIC_FEED.LOG</span>
-</div>
-<span class="font-label text-[8px] text-on-surface-variant">SECURE_CHANNEL_839</span>
-</div>
-<!-- Terminal Content -->
-<div class="p-6 font-label text-[11px] space-y-4 text-[#bccabb] relative">
-<div class="flex gap-4 items-start border-l border-primary/20 pl-4 py-2">
-<span class="text-primary-fixed-dim">[SYSTEM]</span>
-<p><span class="text-primary">INITIALIZED:</span> Diagnostic system ready for bio-sample analysis.</p>
-</div>
-<!-- Results will be populated here by JavaScript -->
-<!-- Visual Glitch Effect -->
-<div class="absolute inset-0 pointer-events-none opacity-5">
-<div class="absolute inset-0 bg-gradient-to-t from-primary/10 via-transparent to-transparent"></div>
-<div class="w-full h-full bg-[repeating-linear-gradient(transparent,transparent_2px,rgba(107,251,154,0.1)_2px,rgba(107,251,154,0.1)_4px)]"></div>
-</div>
-</div>
-<!-- Terminal Input Mimic -->
-<div class="mt-auto p-4 border-t border-primary/10 bg-surface/50">
-<div class="flex items-center gap-2">
-<span class="text-primary">&gt;</span>
-<div class="w-2 h-4 bg-primary animate-[pulse_1s_infinite]"></div>
-</div>
-</div>
-</div>
-<!-- Quick Data Cards -->
-<div class="grid grid-cols-3 gap-4 mt-6">
-<div class="bg-surface-container-low p-4">
-<span class="font-label text-[9px] text-on-surface-variant block uppercase mb-1">SCAN_COUNT</span>
-<span class="font-headline text-2xl font-black text-on-surface leading-none">1,204</span>
-</div>
-<div class="bg-surface-container-low p-4">
-<span class="font-label text-[9px] text-on-surface-variant block uppercase mb-1">DETECTION_RATE</span>
-<span class="font-headline text-2xl font-black text-secondary leading-none">94.2%</span>
-</div>
-<div class="bg-surface-container-low p-4">
-<span class="font-label text-[9px] text-on-surface-variant block uppercase mb-1">THREAT_LEVEL</span>
-<span class="font-headline text-2xl font-black text-error leading-none">LOW</span>
+<div class="p-6 font-label text-[11px] text-[#bccabb]">
+<div class="border border-primary/20 bg-surface-container-low p-4 md:p-5">
+<div class="font-label text-[10px] uppercase tracking-widest text-primary">Analysis Report</div>
+<div class="mt-2 text-sm text-on-surface-variant">Upload and analyze an image to generate the full disease report.</div>
 </div>
 </div>
 </div>
@@ -331,9 +291,6 @@
                 uploadPreview.style.display = 'block';
             }
             
-            logTerminal(`[${getTime()}] Visual sample acquired: ${file.name}`);
-            logTerminal(`[${getTime()}] File size: ${(file.size / 1024).toFixed(2)} KB`);
-            
             // Extract GPS if available
             extractGPSData(file);
         };
@@ -355,7 +312,6 @@
                         
                         document.getElementById('latitude').value = latitude.toFixed(4);
                         document.getElementById('longitude').value = longitude.toFixed(4);
-                        logTerminal(`[${getTime()}] GPS coordinates detected and populated`);
                     }
                 }
             } catch (err) {
@@ -371,42 +327,248 @@
     }
     
     function logTerminal(message) {
-        const contentDiv = resultsPanel.querySelector('.p-6');
-        const logEntry = document.createElement('div');
-        logEntry.className = 'flex gap-4 items-start border-l border-primary/20 pl-4 py-2';
-        logEntry.innerHTML = `<span class="text-primary-fixed-dim">[${getTime()}]</span><p>${message}</p>`;
-        
-        // Insert after existing messages, before the "waiting" message
-        const waitingMsg = Array.from(contentDiv.querySelectorAll('p')).find(p => p.textContent.includes('Waiting for visual sensor'));
-        if (waitingMsg) {
-            waitingMsg.parentElement.parentElement.insertBefore(logEntry, waitingMsg.parentElement.parentElement.lastChild);
-        } else {
-            contentDiv.appendChild(logEntry);
-        }
+        // Terminal logging disabled: report-only UI mode.
     }
     
     function displayResults(data) {
         const contentDiv = resultsPanel.querySelector('.p-6');
         contentDiv.innerHTML = '';
-        
-        logTerminal(`[${getTime()}] Analysis complete`);
-        
-        if (!data.predictions || data.predictions.length === 0) {
-            logTerminal(`[${getTime()}] <span class="text-primary">STATUS: HEALTHY_CROP</span> - No disease detected`);
-            return;
-        }
-        
-        data.predictions.forEach((pred, idx) => {
-            const confidence = (pred.confidence * 100).toFixed(1);
-            logTerminal(`[${getTime()}] <span class="text-secondary">DISEASE_${idx + 1}:</span> ${pred.disease} (${confidence}% confidence)`);
-            
-            if (pred.treatment) {
-                logTerminal(`[${getTime()}] <span class="text-secondary">TREATMENT:</span> ${pred.treatment}`);
+
+        const formatConfidence = (value) => {
+            const num = Number(value);
+            if (!Number.isFinite(num)) return 'N/A';
+            const pct = num <= 1 ? num * 100 : num;
+            return `${pct.toFixed(1)}%`;
+        };
+
+        const esc = (value) => String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        let report;
+
+        // Backward compatibility: older payloads used predictions[]
+        if (Array.isArray(data.predictions)) {
+            if (data.predictions.length === 0) {
+                contentDiv.innerHTML = `
+                    <div class="border border-primary/20 bg-surface-container-low p-4">
+                        <div class="font-label text-[10px] uppercase tracking-widest text-primary">Analysis Complete</div>
+                        <div class="mt-2 font-headline text-lg text-secondary">Status: HEALTHY_CROP</div>
+                        <div class="mt-1 text-sm text-on-surface-variant">No disease detected.</div>
+                    </div>
+                `;
+                return;
             }
-        });
-        
-        if (data.recommendation) {
-            logTerminal(`[${getTime()}] <span class="text-primary-fixed">ADVISORY:</span> ${data.recommendation}`);
+
+            const first = data.predictions[0] || {};
+            report = {
+                crop: data.crop || 'Unknown',
+                disease: first.disease || 'Unknown',
+                confidence: first.confidence,
+                severity_label: data.severity_label || 'Unknown',
+                is_healthy: !!data.is_healthy,
+                location: data.location || 'Not provided',
+                live_weather: data.live_weather || 'Weather unavailable',
+                recommendation: {
+                    immediate_action: first.treatment || '',
+                    local_treatment: '',
+                    weather_warning: '',
+                    estimated_cost: '',
+                    preventive_measures: []
+                }
+            };
+        } else {
+            // Current backend payload: single-object prediction
+            report = data || {};
+        }
+
+        const recommendation = report.recommendation || {};
+        const immediate = recommendation.immediate_action || '';
+        const local = recommendation.local_treatment || '';
+        const weather = recommendation.weather_warning || '';
+        const marketPrice = recommendation.market_price || recommendation.estimated_cost || '';
+        const recoveryTime = recommendation.recovery_time || '';
+        const preventive = Array.isArray(recommendation.preventive_measures)
+            ? recommendation.preventive_measures
+            : [];
+        const organic = Array.isArray(recommendation.organic_treatment)
+            ? recommendation.organic_treatment
+            : [];
+        const chemical = Array.isArray(recommendation.chemical_treatment)
+            ? recommendation.chemical_treatment
+            : [];
+        const statusLabel = report.is_healthy ? 'HEALTHY_CROP' : 'DISEASE_DETECTED';
+        const confidenceNum = Number(report.confidence);
+        const confidencePct = Number.isFinite(confidenceNum)
+            ? Math.max(0, Math.min(100, confidenceNum <= 1 ? confidenceNum * 100 : confidenceNum))
+            : 0;
+        const severityScoreNum = Number(report.severity_score);
+        const severityScore = Number.isFinite(severityScoreNum) ? severityScoreNum : 0;
+        const urgency = report.is_healthy
+            ? { label: 'LOW RISK', bg: 'rgba(77, 224, 130, 0.2)', border: 'rgba(77, 224, 130, 0.6)', text: '#6bfb9a' }
+            : severityScore >= 75
+                ? { label: 'HIGH URGENCY - ACT TODAY', bg: 'rgba(255, 77, 46, 0.18)', border: 'rgba(255, 77, 46, 0.7)', text: '#ff8066' }
+                : { label: 'MODERATE URGENCY - MONITOR CLOSELY', bg: 'rgba(157, 223, 46, 0.14)', border: 'rgba(157, 223, 46, 0.65)', text: '#b2f746' };
+
+        const listHtml = preventive.length
+            ? `<ul class="list-disc pl-5 mt-1">${preventive.map((item) => `<li>${esc(item)}</li>`).join('')}</ul>`
+            : '<span class="text-on-surface-variant">None</span>';
+        const organicHtml = organic.length
+            ? `<ul class="list-disc pl-5 mt-1">${organic.map((item) => `<li>${esc(item)}</li>`).join('')}</ul>`
+            : '<span class="text-on-surface-variant">None</span>';
+        const chemicalHtml = chemical.length
+            ? `<ul class="list-disc pl-5 mt-1">${chemical.map((item) => `<li>${esc(item)}</li>`).join('')}</ul>`
+            : '<span class="text-on-surface-variant">None</span>';
+
+        const actionChecklist = [immediate, local, weather]
+            .filter(Boolean)
+            .map((item) => `<li class="mb-1">${esc(item)}</li>`)
+            .join('');
+
+        const plainReportLines = [
+            `Analysis Report (${getTime()})`,
+            `Status: ${statusLabel}`,
+            `Crop: ${report.crop || 'Unknown'}`,
+            `Disease: ${report.disease || 'Unknown'}`,
+            `Confidence: ${formatConfidence(report.confidence)}`,
+            `Severity: ${report.severity_label || 'Unknown'}`,
+            `Damage Score: ${report.severity_score ?? 'N/A'}%`,
+            `Location: ${report.location || 'Not provided'}`,
+            `Live Weather: ${report.live_weather || 'Weather unavailable'}`,
+            `Immediate Action: ${immediate || 'None'}`,
+            `Local Treatment: ${local || 'None'}`,
+            `Weather Alert: ${weather || 'None'}`,
+            `Market Price: ${marketPrice || 'Weather-dependent; consult local market'}`,
+            `Recovery Time: ${recoveryTime || 'Not available'}`,
+            `Severity Score: ${report.severity_score ?? 'N/A'}`,
+            `Blur Score: ${report.blur_score ?? 'N/A'}`,
+        ];
+        window.__lastReportText = plainReportLines.join('\n');
+
+        contentDiv.innerHTML = `
+            <div class="border border-primary/20 bg-surface-container-low p-4 md:p-5">
+                <div class="flex items-center justify-between gap-3 border-b border-primary/20 pb-3">
+                    <div class="font-label text-[10px] uppercase tracking-widest text-primary">Analysis Report</div>
+                    <div class="font-label text-[10px] text-on-surface-variant">${esc(getTime())}</div>
+                </div>
+
+                <div class="mt-3 px-3 py-2 text-xs font-semibold" style="background:${urgency.bg}; border:1px solid ${urgency.border}; color:${urgency.text};">
+                    ${esc(urgency.label)}
+                </div>
+
+                <div class="mt-3">
+                    <div class="flex items-center justify-between text-xs text-on-surface-variant">
+                        <span>Confidence Meter</span>
+                        <span>${esc(formatConfidence(report.confidence))}</span>
+                    </div>
+                    <div class="mt-1 h-2 w-full bg-surface-container-high border border-primary/20 overflow-hidden">
+                        <div class="h-full bg-primary" style="width:${confidencePct.toFixed(1)}%"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div><span class="text-on-surface-variant">Status:</span> <span class="text-secondary font-semibold">${esc(statusLabel)}</span></div>
+                    <div><span class="text-on-surface-variant">Crop:</span> <span class="font-semibold">${esc(report.crop || 'Unknown')}</span></div>
+                    <div><span class="text-on-surface-variant">Disease:</span> <span class="font-semibold">${esc(report.disease || 'Unknown')}</span></div>
+                    <div><span class="text-on-surface-variant">Confidence:</span> <span class="font-semibold">${esc(formatConfidence(report.confidence))}</span></div>
+                    <div><span class="text-on-surface-variant">Severity:</span> <span class="font-semibold">${esc(report.severity_label || 'Unknown')}</span></div>
+                    <div><span class="text-on-surface-variant">Damage Score:</span> <span class="font-semibold">${esc(report.severity_score ?? 'N/A')}%</span></div>
+                    <div><span class="text-on-surface-variant">Location:</span> <span class="font-semibold">${esc(report.location || 'Not provided')}</span></div>
+                    <div class="md:col-span-2"><span class="text-on-surface-variant">Live Weather:</span> <span class="font-semibold">${esc(report.live_weather || 'Weather unavailable')}</span></div>
+                </div>
+
+                <div class="mt-4 border-t border-primary/20 pt-3">
+                    <div class="font-label text-[10px] uppercase tracking-widest text-primary">AI Summary</div>
+                    <div id="llm-summary-card" class="mt-2 text-sm text-on-surface-variant">Generating detailed summary...</div>
+                </div>
+
+                <div class="mt-4 border-t border-primary/20 pt-3">
+                    <div class="font-label text-[10px] uppercase tracking-widest text-primary">Recommendation</div>
+                    <div class="mt-2 text-sm"><span class="text-on-surface-variant">Immediate Action:</span> ${immediate ? `<span class="font-semibold">${esc(immediate)}</span>` : '<span class="text-on-surface-variant">None</span>'}</div>
+                    <div class="mt-2 text-sm"><span class="text-on-surface-variant">Local Treatment:</span> ${local ? `<span class="font-semibold">${esc(local)}</span>` : '<span class="text-on-surface-variant">None</span>'}</div>
+                    <div class="mt-2 text-sm"><span class="text-on-surface-variant">Weather Alert:</span> ${weather ? `<span class="font-semibold">${esc(weather)}</span>` : '<span class="text-on-surface-variant">None</span>'}</div>
+                    <div class="mt-2 text-sm"><span class="text-on-surface-variant">Market Price:</span> ${marketPrice ? `<span class="font-semibold">${esc(marketPrice)}</span>` : '<span class="text-on-surface-variant">Weather-dependent; consult local market</span>'}</div>
+                    <div class="mt-2 text-sm"><span class="text-on-surface-variant">Recovery Time:</span> ${recoveryTime ? `<span class="font-semibold">${esc(recoveryTime)}</span>` : '<span class="text-on-surface-variant">Not available</span>'}</div>
+                    <div class="mt-2 text-sm"><span class="text-on-surface-variant">Organic Treatment Options:</span>${organicHtml}</div>
+                    <div class="mt-2 text-sm"><span class="text-on-surface-variant">Chemical Treatment Options:</span>${chemicalHtml}</div>
+                    <div class="mt-2 text-sm"><span class="text-on-surface-variant">Preventive Measures:</span>${listHtml}</div>
+                </div>
+
+                <div class="mt-4 border-t border-primary/20 pt-3">
+                    <div class="font-label text-[10px] uppercase tracking-widest text-primary">Farmer Action Checklist</div>
+                    ${actionChecklist ? `<ol class="list-decimal pl-5 mt-2 text-sm">${actionChecklist}</ol>` : '<div class="mt-2 text-sm text-on-surface-variant">No immediate checklist available.</div>'}
+                </div>
+
+                <div class="mt-4 border-t border-primary/20 pt-3">
+                    <div class="font-label text-[10px] uppercase tracking-widest text-primary">Diagnostics</div>
+                    <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div><span class="text-on-surface-variant">Severity Score:</span> <span class="font-semibold">${esc(report.severity_score ?? 'N/A')}</span></div>
+                        <div><span class="text-on-surface-variant">Blur Score:</span> <span class="font-semibold">${esc(report.blur_score ?? 'N/A')}</span></div>
+                        <div><span class="text-on-surface-variant">Flagged:</span> <span class="font-semibold">${report.flagged ? 'Yes' : 'No'}</span></div>
+                        <div><span class="text-on-surface-variant">Flag Reason:</span> <span class="font-semibold">${esc(report.flag_reason || 'None')}</span></div>
+                    </div>
+                    ${report.cam_image ? `
+                    <div class="mt-3">
+                        <div class="text-xs text-on-surface-variant mb-1">Grad-CAM Visualization</div>
+                        <img src="${esc(report.cam_image)}" alt="Grad-CAM" class="w-full max-h-72 object-contain border border-primary/20" />
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="mt-4 border-t border-primary/20 pt-3 flex flex-wrap gap-2">
+                    <button onclick="copyFullReport()" class="px-3 py-2 text-xs font-semibold border border-primary/40 text-primary hover:bg-primary/10">Copy Report</button>
+                    <button onclick="shareFullReport()" class="px-3 py-2 text-xs font-semibold border border-secondary/40 text-secondary hover:bg-secondary/10">Share to WhatsApp</button>
+                </div>
+            </div>
+        `;
+
+        fetchGrokSummary(report);
+    }
+
+    function copyFullReport() {
+        const text = window.__lastReportText || 'No report generated yet.';
+        navigator.clipboard.writeText(text)
+            .then(() => alert('Report copied to clipboard'))
+            .catch(() => alert('Could not copy report.'));
+    }
+
+    function shareFullReport() {
+        const text = window.__lastReportText || 'No report generated yet.';
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    async function fetchGrokSummary(report) {
+        const target = document.getElementById('llm-summary-card');
+        if (!target) return;
+
+        try {
+            const payload = {
+                crop: report.crop || 'Unknown',
+                disease: report.disease || 'Unknown',
+                confidence: Number(report.confidence) <= 1 ? Number(report.confidence) : Number(report.confidence) / 100,
+                severity: report.severity_label || 'Moderate',
+                location: report.location || 'Unknown',
+                live_weather: report.live_weather || 'Weather unavailable',
+                use_llm: true
+            };
+
+            const response = await fetch(`${API_BASE}/generate-recommendation`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                target.textContent = 'Summary unavailable right now.';
+                return;
+            }
+
+            const data = await response.json();
+            const summary = data.summary || 'No additional summary returned.';
+            target.innerHTML = `<div class="text-sm font-semibold text-on-surface">${summary}</div>`;
+        } catch (error) {
+            target.textContent = 'Summary unavailable right now.';
         }
     }
     
@@ -426,8 +588,6 @@
             formData.append('latitude', document.getElementById('latitude')?.value || '');
             formData.append('longitude', document.getElementById('longitude')?.value || '');
             
-            logTerminal(`[${getTime()}] <span class="text-primary">INITIATING:</span> CNN model inference...`);
-            
             try {
                 const response = await fetch(`${API_BASE}/predict`, {
                     method: 'POST',
@@ -442,7 +602,6 @@
                 displayResults(data);
                 
             } catch (error) {
-                logTerminal(`[${getTime()}] <span class="text-error">ERROR:</span> ${error.message}`);
                 alert('Error analyzing image: ' + error.message);
             } finally {
                 analyzeBtn.disabled = false;
@@ -461,13 +620,8 @@
         document.getElementById('latitude').value = '';
         document.getElementById('longitude').value = '';
         document.getElementById('notes').value = '';
-        logTerminal(`[${getTime()}] System reset. Ready for new analysis.`);
     }
     
-    // Initialize terminal
-    document.addEventListener('DOMContentLoaded', () => {
-        logTerminal(`[${getTime()}] SYNTHETIC_CANOPY v1.0 initialized`);
-        logTerminal(`[${getTime()}] Backend connection: Ready`);
-    });
+    document.addEventListener('DOMContentLoaded', () => {});
 </script>
 </body></html>
