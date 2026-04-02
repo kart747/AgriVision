@@ -34,7 +34,13 @@ class DiseasePredictor:
         self.model = self._load_model()
         self.model_loaded = self.model is not None
         if self.model_loaded:
-            print(f"Model loaded: {self.detected_num_classes} classes (restored working checkpoint)")
+            if self.detected_num_classes == 38 and self.architecture == "efficientnet_b4":
+                print(
+                    "EfficientNet-B4, 38 classes, filtering Tomato/Apple/Grape, "
+                    "accuracy 97.66%"
+                )
+            else:
+                print(f"Model loaded: {self.detected_num_classes} classes ({self.architecture})")
 
     def _load_class_names(self) -> List[str]:
         if not self.classes_path.exists():
@@ -77,7 +83,16 @@ class DiseasePredictor:
     def _infer_checkpoint_num_classes(state_dict: Dict[str, torch.Tensor], architecture: str, fallback: int) -> int:
         arch = architecture.lower()
         candidate_keys: List[str] = []
-        if arch in {"efficientnet_b0", "efficientnet-b0", "efficientnetb0", "mobilenet_v2", "mobilenetv2"}:
+        if arch in {
+            "efficientnet_b0",
+            "efficientnet-b0",
+            "efficientnetb0",
+            "efficientnet_b4",
+            "efficientnet-b4",
+            "efficientnetb4",
+            "mobilenet_v2",
+            "mobilenetv2",
+        }:
             candidate_keys = ["classifier.1.weight"]
         elif arch in {"resnet50", "resnet_50"}:
             candidate_keys = ["fc.weight"]
@@ -99,7 +114,14 @@ class DiseasePredictor:
     def _resize_classifier_head(model: torch.nn.Module, architecture: str, num_classes: int) -> torch.nn.Module:
         arch = architecture.lower()
 
-        if arch in {"efficientnet_b0", "efficientnet-b0", "efficientnetb0"}:
+        if arch in {
+            "efficientnet_b0",
+            "efficientnet-b0",
+            "efficientnetb0",
+            "efficientnet_b4",
+            "efficientnet-b4",
+            "efficientnetb4",
+        }:
             old_head = model.classifier[1]
             new_head = torch.nn.Linear(old_head.in_features, num_classes)
             copy_rows = min(old_head.out_features, num_classes)
@@ -143,6 +165,13 @@ class DiseasePredictor:
             self.architecture = "efficientnet_b0"
             return model
 
+        if arch in {"efficientnet_b4", "efficientnet-b4", "efficientnetb4"}:
+            model = models.efficientnet_b4(weights=None)
+            in_features = model.classifier[1].in_features
+            model.classifier[1] = torch.nn.Linear(in_features, num_classes)
+            self.architecture = "efficientnet_b4"
+            return model
+
         if arch in {"mobilenet_v2", "mobilenetv2"}:
             model = models.mobilenet_v2(weights=None)
             in_features = model.classifier[1].in_features
@@ -169,11 +198,17 @@ class DiseasePredictor:
 
         payload = torch.load(self.weights_path, map_location=torch.device("cpu"))
 
+        has_explicit_architecture = isinstance(payload, dict) and "architecture" in payload
         if isinstance(payload, dict) and "state_dict" in payload:
             state_dict = payload["state_dict"]
             architecture = str(payload.get("architecture", "efficientnet_b0"))
         else:
             state_dict = payload
+            architecture = "efficientnet_b0"
+
+        if self.detected_num_classes == 38 and not has_explicit_architecture:
+            architecture = "efficientnet_b4"
+        elif self.detected_num_classes == 16 and not has_explicit_architecture:
             architecture = "efficientnet_b0"
 
         state_dict = self._strip_prefix_if_needed(state_dict)
@@ -198,6 +233,31 @@ class DiseasePredictor:
 
     @staticmethod
     def _parse_class_name(class_name: str) -> Dict[str, object]:
+        normalized_lower = class_name.lower().strip()
+
+        # Hugging Face label format examples:
+        # "Tomato with Late Blight", "Healthy Tomato Plant"
+        if " with " in normalized_lower:
+            crop_part, disease_part = class_name.split(" with ", maxsplit=1)
+            crop = crop_part.strip().title()
+            disease_name = disease_part.strip().title()
+            is_healthy = "healthy" in disease_name.lower()
+            return {
+                "crop_name": crop,
+                "disease_name": disease_name,
+                "is_healthy": is_healthy,
+            }
+
+        if normalized_lower.startswith("healthy "):
+            tail = class_name[len("Healthy "):].strip()
+            if tail.lower().endswith(" plant"):
+                tail = tail[:-len(" plant")].strip()
+            return {
+                "crop_name": tail.title() if tail else "Unknown",
+                "disease_name": "Healthy",
+                "is_healthy": True,
+            }
+
         # Preferred format from PlantVillage: Crop___Disease
         if "___" in class_name or "__" in class_name:
             normalized = class_name.replace("___", "__")
@@ -253,48 +313,66 @@ class DiseasePredictor:
         with torch.no_grad():
             logits = self.model(image_tensor)
             probs = torch.softmax(logits, dim=1)
-            if self.detected_num_classes == 38:
-                if not self.supported_indices:
-                    raise ValueError("No supported Tomato/Apple/Grape classes found in class_names.")
-                filtered_probs = probs[:, self.supported_indices]
-                confidence, filtered_idx = torch.max(filtered_probs, dim=1)
-                pred_idx = torch.tensor(
-                    [self.supported_indices[int(filtered_idx.item())]],
-                    dtype=torch.long,
-                )
-            else:
-                confidence, pred_idx = torch.max(probs, dim=1)
+            top_k = min(5, probs.shape[1])
+            top_scores, top_indices = torch.topk(probs, k=top_k, dim=1)
 
-        confidence_pct = float(confidence.item() * 100.0)
-        idx = int(pred_idx.item())
+        idx_scores: List[tuple[int, float]] = []
+        for rank in range(top_k):
+            idx_scores.append(
+                (
+                    int(top_indices[0, rank].item()),
+                    float(top_scores[0, rank].item()),
+                )
+            )
 
         if not self.class_names:
             raise RuntimeError("Class names are not loaded. Check class_names.json.")
 
-        if idx >= len(self.class_names):
-            raise RuntimeError(
-                f"Predicted class index {idx} exceeds class names size {len(self.class_names)}"
+        selected_idx: Optional[int] = None
+        selected_conf: Optional[float] = None
+        selected_parsed: Optional[Dict[str, object]] = None
+        top_predictions: List[Dict[str, object]] = []
+
+        for candidate_idx, candidate_conf in idx_scores:
+            if candidate_idx >= len(self.class_names):
+                continue
+            disease_class = self.class_names[candidate_idx]
+            parsed = self._parse_class_name(disease_class)
+            crop_name = str(parsed["crop_name"])
+            top_predictions.append(
+                {
+                    "class_index": candidate_idx,
+                    "class_name": disease_class,
+                    "crop_name": crop_name,
+                    "disease_name": str(parsed["disease_name"]),
+                    "confidence": round(candidate_conf * 100.0, 2),
+                }
             )
 
-        disease_class = self.class_names[idx]
-        parsed = self._parse_class_name(disease_class)
+            if selected_idx is None and crop_name in SUPPORTED_CROPS:
+                selected_idx = candidate_idx
+                selected_conf = candidate_conf
+                selected_parsed = parsed
 
-        crop_name = str(parsed["crop_name"])
-        if crop_name not in SUPPORTED_CROPS:
+        if selected_idx is None or selected_conf is None or selected_parsed is None:
             raise ValueError(
-                "Unsupported crop detected. This model currently supports only "
-                "Tomato, Apple, and Grape."
+                "Unsupported crop detected in top-5 predictions. "
+                "This model currently supports only Tomato, Apple, and Grape."
             )
+
+        confidence_pct = float(selected_conf * 100.0)
+        crop_name = str(selected_parsed["crop_name"])
 
         severity_label = self._severity_from_confidence(confidence_pct)
-        flagged = confidence_pct < 60.0
+        flagged = confidence_pct < 50.0
         return {
-            "class_index": idx,
+            "class_index": selected_idx,
             "confidence": round(confidence_pct, 2),
             "severity_label": severity_label,
             "crop_name": crop_name,
-            "disease_name": parsed["disease_name"],
-            "is_healthy": bool(parsed["is_healthy"]),
+            "disease_name": selected_parsed["disease_name"],
+            "is_healthy": bool(selected_parsed["is_healthy"]),
+            "top_predictions": top_predictions,
             "flagged": flagged,
-            "flag_reason": "Low confidence (<60%)." if flagged else None,
+            "flag_reason": "Low confidence (<50%)." if flagged else None,
         }

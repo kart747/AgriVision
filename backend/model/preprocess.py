@@ -10,7 +10,7 @@ from fastapi import HTTPException
 _IMAGE_SIZE = (224, 224)
 _NORMALIZE_MEAN = [0.485, 0.456, 0.406]
 _NORMALIZE_STD = [0.229, 0.224, 0.225]
-_BLUR_THRESHOLD = 100.0
+_BLUR_THRESHOLD = 50.0
 
 
 def preprocess_image(image_bytes: bytes) -> Tuple[torch.Tensor, float]:
