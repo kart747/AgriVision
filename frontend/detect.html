@@ -403,6 +403,11 @@
         const confidencePct = Number.isFinite(confidenceNum)
             ? Math.max(0, Math.min(100, confidenceNum <= 1 ? confidenceNum * 100 : confidenceNum))
             : 0;
+        const confidenceBand = confidencePct < 75
+            ? { label: 'LOW', color: '#ff8066' }
+            : confidencePct <= 85
+                ? { label: 'MODERATE', color: '#f0c44c' }
+                : { label: 'HIGH', color: '#6bfb9a' };
         const severityScoreNum = Number(report.severity_score);
         const severityScore = Number.isFinite(severityScoreNum) ? severityScoreNum : 0;
         const urgency = report.is_healthy
@@ -459,13 +464,13 @@
 
                 <div class="mt-3">
                     <div class="flex items-center justify-between text-xs text-on-surface-variant">
-                        <span>Confidence Meter</span>
+                        <span>Confidence Meter (${esc(confidenceBand.label)})</span>
                         <span>${esc(formatConfidence(report.confidence))}</span>
                     </div>
                     <div class="mt-1 h-2 w-full bg-surface-container-high border border-primary/20 overflow-hidden">
-                        <div class="h-full bg-primary" style="width:${confidencePct.toFixed(1)}%"></div>
+                        <div class="h-full" style="width:${confidencePct.toFixed(1)}%; background:${confidenceBand.color};"></div>
                     </div>
-                    <div class="mt-1 text-[10px] text-on-surface-variant">Minimum accepted confidence: 50%</div>
+                    <div class="mt-1 text-[10px] text-on-surface-variant">Minimum accepted confidence: 75%</div>
                 </div>
 
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
