@@ -75,8 +75,8 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - training/test_pretrained.py: Direct model inference test on 3 internet-downloaded crop samples (complete).
 - training/tmp_test_images/: Downloaded training-test images (generated artifact).
 - frontend/: Browser-openable frontend test tooling (complete for testing scope).
-- frontend/index.html: Friend's richer landing/dashboard frontend integrated as primary frontend entry (complete).
-- frontend/detect.html: Main detection interface (complete).
+- frontend/index.html: Friend's richer landing/dashboard frontend integrated as primary frontend entry, with clean links to detect.html (complete).
+- frontend/detect.html: Main detection interface, linked back to index.html (complete).
 - frontend/test_ui.html: Single-file manual API testing UI with predict/drone tabs and health indicator (complete).
 - TestData/: Sample test images (5 images for evaluation).
 - evaluation_results/: Auto-generated evaluation reports (created when evaluate_model.py runs).
@@ -186,6 +186,10 @@ READ THIS FILE FIRST BEFORE DOING ANYTHING
 - Updated: COPILOT_MEMORY.md to reflect frontend integration status.
 - Commit: 33fcf21 (Integrate friend's frontend as primary page).
 - Push: main -> origin/main.
+
+- 2026-04-02: Unified the root and frontend home/detect pages.
+- Updated: root index.html, root detect.html, frontend/index.html, frontend/detect.html.
+- Result: frontend/index.html is now the full landing page and frontend/detect.html is the scan page with matching navigation.
 
 - 2026-04-01: Integrated friend's trained model artifacts from non-main branch.
 - Source branch: origin/add-training-script.
