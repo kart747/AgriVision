@@ -198,19 +198,39 @@ class DiseasePredictor:
 
     @staticmethod
     def _parse_class_name(class_name: str) -> Dict[str, object]:
-        if "___" in class_name:
+        # Preferred format from PlantVillage: Crop___Disease
+        if "___" in class_name or "__" in class_name:
             normalized = class_name.replace("___", "__")
             parts = normalized.split("__", maxsplit=1)
-            crop_raw = parts[0] if parts else "Unknown"
+            crop = parts[0].replace("_", " ").strip().title() if parts else "Unknown"
             disease_raw = parts[1] if len(parts) > 1 else "Unknown"
-        else:
-            parts = class_name.split("_", maxsplit=1)
-            crop_raw = parts[0] if parts else "Unknown"
-            disease_raw = parts[1] if len(parts) > 1 else "Unknown"
+            disease_name = disease_raw.replace("_", " ").strip().title()
+            is_healthy = "healthy" in disease_raw.lower()
+            return {
+                "crop_name": crop,
+                "disease_name": disease_name,
+                "is_healthy": is_healthy,
+            }
 
-        crop = crop_raw.replace("_", " ").strip().title() if crop_raw else "Unknown"
-        disease_name = disease_raw.replace("_", " ").strip().title()
-        is_healthy = "healthy" in disease_raw.lower()
+        # Unified merged-dataset format: crop_disease_name (e.g. tomato_late_blight)
+        tokens = [t for t in class_name.strip().split("_") if t]
+        if tokens:
+            crop_token = tokens[0].lower()
+            if crop_token in {"tomato", "apple", "grape"}:
+                crop = crop_token.title()
+                disease_raw = "_".join(tokens[1:]) if len(tokens) > 1 else "unknown"
+                disease_name = disease_raw.replace("_", " ").strip().title()
+                is_healthy = "healthy" in disease_raw.lower()
+                return {
+                    "crop_name": crop,
+                    "disease_name": disease_name,
+                    "is_healthy": is_healthy,
+                }
+
+        crop = "Unknown"
+        disease_raw = class_name
+        disease_name = class_name.replace("_", " ").strip().title()
+        is_healthy = "healthy" in class_name.lower()
 
         return {
             "crop_name": crop,

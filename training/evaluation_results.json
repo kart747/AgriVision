@@ -1,0 +1,76 @@
+{
+  "merged_dataset": {
+    "accuracy": 0.946498819826908,
+    "macro_f1": 0.9196009838875586,
+    "weighted_f1": 0.9462433108167597,
+    "total_samples": 2542,
+    "per_class": {
+      "apple_healthy": 0.9408602150537635,
+      "apple_rust": 0.9565217391304348,
+      "apple_scab": 0.9333333333333333,
+      "grape_black_rot": 0.9702970297029703,
+      "grape_healthy": 0.9896907216494846,
+      "tomato_bacterial_spot": 0.9158415841584159,
+      "tomato_early_blight": 0.9316770186335404,
+      "tomato_healthy": 0.9590443686006825,
+      "tomato_late_blight": 0.9636363636363636,
+      "tomato_leaf_mold": 0.8763440860215054,
+      "tomato_mosaic_virus": 0.8297872340425532,
+      "tomato_septoria_leaf_spot": 0.940625,
+      "tomato_spider_mites": 0.5,
+      "tomato_yellow_leaf_curl_virus": 0.9908424908424909
+    }
+  },
+  "sample_images": {
+    "predictions": [
+      {
+        "file": "0a769a71-052a-4f19-a4d8-b0f0cb75541c___FREC_Scab 3165.JPG",
+        "crop": "Apple",
+        "disease": "Scab",
+        "confidence": 100.0,
+        "is_healthy": false
+      },
+      {
+        "file": "0a31e630-0d98-416b-b0e4-88a88aad1dc5___RS_HL 9653.JPG",
+        "crop": "Tomato",
+        "disease": "Healthy",
+        "confidence": 100.0,
+        "is_healthy": true
+      },
+      {
+        "file": "0abc57ec-7f3b-482a-8579-21f3b2fb780b___RS_Erly.B 7609.JPG",
+        "crop": "Tomato",
+        "disease": "Early Blight",
+        "confidence": 99.99,
+        "is_healthy": false
+      },
+      {
+        "file": "0c1667a2-61d7-4dee-b4d9-0d141a1ceb20___Mt.N.V_HL 9127.JPG",
+        "crop": "Grape",
+        "disease": "Healthy",
+        "confidence": 99.99,
+        "is_healthy": true
+      },
+      {
+        "file": "0cd24b0c-0a9d-483f-8734-5c08988e029f___FREC_C.Rust 3762.JPG",
+        "crop": "Apple",
+        "disease": "Rust",
+        "confidence": 100.0,
+        "is_healthy": false
+      }
+    ],
+    "total": 5
+  },
+  "internet_images": {
+    "predictions": [
+      {
+        "url": "https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=224",
+        "actual_class": "tomato_healthy",
+        "predicted_crop": "Grape",
+        "predicted_disease": "Black Rot",
+        "confidence": 72.95
+      }
+    ],
+    "total": 1
+  }
+}

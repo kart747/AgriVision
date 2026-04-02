@@ -1,0 +1,66 @@
+[
+  {
+    "file": "NDSU Agriculture Extension - Cedar Apple Rust Underside Leaf.webp",
+    "actual": "apple_rust",
+    "predicted": "apple_rust",
+    "confidence": 94.65,
+    "crop": "Apple",
+    "disease": "Rust"
+  },
+  {
+    "file": "NDSU Agriculture Extension - Cedar Apple Rust.webp",
+    "actual": "apple_rust",
+    "predicted": "grape_black_rot",
+    "confidence": 73.76,
+    "crop": "Grape",
+    "disease": "Black Rot"
+  },
+  {
+    "file": "alternaria-leaf-spot-diseased-apple-treet-25564777.webp",
+    "actual": "apple_alternaria",
+    "predicted": "apple_rust",
+    "confidence": 70.58,
+    "crop": "Apple",
+    "disease": "Rust"
+  },
+  {
+    "file": "default-92c5c2dadb77f4bcc59ca7337e48c284.webp",
+    "actual": "unknown",
+    "predicted": "apple_scab",
+    "confidence": 38.3,
+    "crop": "Apple",
+    "disease": "Scab"
+  },
+  {
+    "file": "green-apple-leaves-free-photo.webp",
+    "actual": "apple_healthy",
+    "predicted": "tomato_healthy",
+    "confidence": 53.71,
+    "crop": "Tomato",
+    "disease": "Healthy"
+  },
+  {
+    "file": "medium (1).jpg",
+    "actual": "unknown",
+    "predicted": "grape_healthy",
+    "confidence": 100.0,
+    "crop": "Grape",
+    "disease": "Healthy"
+  },
+  {
+    "file": "medium.jpeg",
+    "actual": "unknown",
+    "predicted": "grape_healthy",
+    "confidence": 90.95,
+    "crop": "Grape",
+    "disease": "Healthy"
+  },
+  {
+    "file": "medium.jpg",
+    "actual": "unknown",
+    "predicted": "grape_healthy",
+    "confidence": 76.26,
+    "crop": "Grape",
+    "disease": "Healthy"
+  }
+]

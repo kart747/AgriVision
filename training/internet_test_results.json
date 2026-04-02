@@ -1,0 +1,22 @@
+{
+  "accuracy": 0.5,
+  "macro_f1": 0.3333333333333333,
+  "weighted_f1": 0.5,
+  "total_images": 2,
+  "results": [
+    {
+      "file": "apple_scab_1.jpg",
+      "actual": "apple_scab",
+      "predicted": "grape_black_rot",
+      "confidence": 78.43,
+      "correct": false
+    },
+    {
+      "file": "tomato_late_blight_1.jpg",
+      "actual": "tomato_late_blight",
+      "predicted": "tomato_late_blight",
+      "confidence": 99.99,
+      "correct": true
+    }
+  ]
+}
