@@ -1,0 +1,93 @@
+{
+  "winner": "current",
+  "win_counts": {
+    "current": 8,
+    "hf": 0
+  },
+  "results": {
+    "current": [
+      {
+        "file": "0a31e630-0d98-416b-b0e4-88a88aad1dc5___RS_HL 9653.JPG",
+        "ok": true,
+        "confidence": 100.0
+      },
+      {
+        "file": "0a769a71-052a-4f19-a4d8-b0f0cb75541c___FREC_Scab 3165.JPG",
+        "ok": true,
+        "confidence": 99.95
+      },
+      {
+        "file": "0abc57ec-7f3b-482a-8579-21f3b2fb780b___RS_Erly.B 7609.JPG",
+        "ok": true,
+        "confidence": 99.44
+      },
+      {
+        "file": "0c1667a2-61d7-4dee-b4d9-0d141a1ceb20___Mt.N.V_HL 9127.JPG",
+        "ok": true,
+        "confidence": 99.99
+      },
+      {
+        "file": "0cd24b0c-0a9d-483f-8734-5c08988e029f___FREC_C.Rust 3762.JPG",
+        "ok": true,
+        "confidence": 100.0
+      },
+      {
+        "file": "3(1).jpeg",
+        "ok": true,
+        "confidence": 86.33
+      },
+      {
+        "file": "Untitled.jpeg",
+        "ok": true,
+        "confidence": 75.39
+      },
+      {
+        "file": "result.jpeg",
+        "ok": true,
+        "confidence": 39.0
+      }
+    ],
+    "hf": [
+      {
+        "file": "0a31e630-0d98-416b-b0e4-88a88aad1dc5___RS_HL 9653.JPG",
+        "ok": true,
+        "confidence": 2.68
+      },
+      {
+        "file": "0a769a71-052a-4f19-a4d8-b0f0cb75541c___FREC_Scab 3165.JPG",
+        "ok": true,
+        "confidence": 2.68
+      },
+      {
+        "file": "0abc57ec-7f3b-482a-8579-21f3b2fb780b___RS_Erly.B 7609.JPG",
+        "ok": true,
+        "confidence": 2.68
+      },
+      {
+        "file": "0c1667a2-61d7-4dee-b4d9-0d141a1ceb20___Mt.N.V_HL 9127.JPG",
+        "ok": true,
+        "confidence": 2.68
+      },
+      {
+        "file": "0cd24b0c-0a9d-483f-8734-5c08988e029f___FREC_C.Rust 3762.JPG",
+        "ok": true,
+        "confidence": 2.68
+      },
+      {
+        "file": "3(1).jpeg",
+        "ok": true,
+        "confidence": 2.68
+      },
+      {
+        "file": "Untitled.jpeg",
+        "ok": true,
+        "confidence": 2.68
+      },
+      {
+        "file": "result.jpeg",
+        "ok": true,
+        "confidence": 2.68
+      }
+    ]
+  }
+}
